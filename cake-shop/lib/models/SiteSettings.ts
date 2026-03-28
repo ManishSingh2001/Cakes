@@ -20,6 +20,31 @@ export interface ISiteSettings {
     isEnabled: boolean;
     message: string;
   };
+  paymentGateways: {
+    razorpay: {
+      enabled: boolean;
+      displayName: string;
+      keyId: string;
+      keySecret: string;
+    };
+    stripe: {
+      enabled: boolean;
+      displayName: string;
+      publishableKey: string;
+      secretKey: string;
+    };
+    cod: {
+      enabled: boolean;
+      displayName: string;
+      instructions: string;
+    };
+    bankTransfer: {
+      enabled: boolean;
+      displayName: string;
+      instructions: string;
+      accountDetails: string;
+    };
+  };
   updatedAt: Date;
 }
 
@@ -43,6 +68,31 @@ const siteSettingsSchema = new Schema<ISiteSettings>(
     maintenance: {
       isEnabled: { type: Boolean, default: false },
       message: { type: String, default: "We'll be back soon!" },
+    },
+    paymentGateways: {
+      razorpay: {
+        enabled: { type: Boolean, default: true },
+        displayName: { type: String, default: "Razorpay" },
+        keyId: { type: String, default: "" },
+        keySecret: { type: String, default: "" },
+      },
+      stripe: {
+        enabled: { type: Boolean, default: false },
+        displayName: { type: String, default: "Stripe" },
+        publishableKey: { type: String, default: "" },
+        secretKey: { type: String, default: "" },
+      },
+      cod: {
+        enabled: { type: Boolean, default: false },
+        displayName: { type: String, default: "Cash on Delivery" },
+        instructions: { type: String, default: "Pay when your order is delivered." },
+      },
+      bankTransfer: {
+        enabled: { type: Boolean, default: false },
+        displayName: { type: String, default: "Bank Transfer" },
+        instructions: { type: String, default: "Transfer the amount to our bank account." },
+        accountDetails: { type: String, default: "" },
+      },
     },
   },
   { timestamps: true }

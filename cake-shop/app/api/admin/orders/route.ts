@@ -73,8 +73,8 @@ export async function PUT(request: NextRequest) {
     const { orderStatus, note } = validation.data;
 
     await connectDB();
-    const order = await Order.findOneAndUpdate(
-      { orderId },
+    const order = await Order.findByIdAndUpdate(
+      orderId,
       {
         orderStatus,
         $push: {

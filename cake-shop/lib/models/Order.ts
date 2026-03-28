@@ -51,11 +51,14 @@ export interface IOrder {
   discount: number;
   totalAmount: number;
   payment: {
-    method: "razorpay" | "cod";
+    method: "razorpay" | "stripe" | "cod" | "bank_transfer";
     status: "pending" | "paid" | "failed" | "refunded";
     razorpayOrderId?: string;
     razorpayPaymentId?: string;
     razorpaySignature?: string;
+    stripePaymentIntentId?: string;
+    stripeSessionId?: string;
+    bankTransferReference?: string;
     paidAt?: Date;
   };
   orderStatus: "placed" | "confirmed" | "preparing" | "out_for_delivery" | "delivered" | "cancelled";
@@ -110,11 +113,14 @@ const orderSchema = new Schema<IOrder>(
     discount: { type: Number, default: 0 },
     totalAmount: { type: Number, required: true },
     payment: {
-      method: { type: String, enum: ["razorpay", "cod"], default: "razorpay" },
+      method: { type: String, enum: ["razorpay", "stripe", "cod", "bank_transfer"], default: "razorpay" },
       status: { type: String, enum: ["pending", "paid", "failed", "refunded"], default: "pending" },
       razorpayOrderId: { type: String },
       razorpayPaymentId: { type: String },
       razorpaySignature: { type: String },
+      stripePaymentIntentId: { type: String },
+      stripeSessionId: { type: String },
+      bankTransferReference: { type: String },
       paidAt: { type: Date },
     },
     orderStatus: {

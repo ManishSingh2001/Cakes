@@ -22,16 +22,14 @@ import { formatPrice, formatDate } from "@/lib/utils";
 
 interface OrderItem {
   _id: string;
-  cake: {
-    _id: string;
-    name: string;
-    images: { url: string; alt: string }[];
-  };
-  weight: number;
-  price: number;
+  cakeId: string;
+  name: string;
+  image: string;
+  priceOption: { weight: number; sellPrice: number };
   quantity: number;
   cakeMessage?: string;
-  addons: { name: string; price: number }[];
+  addons: { name: string; price: number; quantity: number }[];
+  itemTotal: number;
 }
 
 interface Order {
@@ -83,7 +81,7 @@ async function getOrder(id: string): Promise<Order | null> {
 
   if (!res.ok) return null;
   const data = await res.json();
-  return data.order ?? data ?? null;
+  return data.order ?? null;
 }
 
 function StatusTimeline({ currentStatus }: { currentStatus: string }) {
@@ -224,20 +222,13 @@ export default async function OrderDetailPage({
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            {order.items.map((item) => {
-              const addonsTotal = item.addons.reduce(
-                (sum, a) => sum + a.price,
-                0
-              );
-              const itemTotal = (item.price + addonsTotal) * item.quantity;
-
-              return (
+            {order.items.map((item) => (
                 <div key={item._id} className="flex gap-4">
                   <div className="relative h-20 w-20 shrink-0 overflow-hidden rounded-lg bg-muted">
-                    {item.cake.images[0] ? (
+                    {item.image ? (
                       <Image
-                        src={item.cake.images[0].url}
-                        alt={item.cake.images[0].alt || item.cake.name}
+                        src={item.image}
+                        alt={item.name}
                         fill
                         className="object-cover"
                         sizes="80px"
@@ -249,9 +240,9 @@ export default async function OrderDetailPage({
                     )}
                   </div>
                   <div className="flex-1 min-w-0">
-                    <h3 className="font-semibold">{item.cake.name}</h3>
+                    <h3 className="font-semibold">{item.name}</h3>
                     <p className="text-sm text-muted-foreground">
-                      {item.weight} kg x {item.quantity} @ {formatPrice(item.price)}
+                      {item.priceOption.weight} kg x {item.quantity} @ {formatPrice(item.priceOption.sellPrice)}
                     </p>
                     {item.cakeMessage && (
                       <p className="text-xs text-muted-foreground">
@@ -269,11 +260,10 @@ export default async function OrderDetailPage({
                     )}
                   </div>
                   <span className="font-semibold shrink-0">
-                    {formatPrice(itemTotal)}
+                    {formatPrice(item.itemTotal)}
                   </span>
                 </div>
-              );
-            })}
+            ))}
 
             <Separator />
 

@@ -88,6 +88,31 @@ export const siteSettingsSchema = z.object({
     isEnabled: z.boolean().default(false),
     message: z.string().default("We'll be back soon!"),
   }),
+  paymentGateways: z.object({
+    razorpay: z.object({
+      enabled: z.boolean().default(true),
+      displayName: z.string().default("Razorpay"),
+      keyId: z.string().default(""),
+      keySecret: z.string().default(""),
+    }),
+    stripe: z.object({
+      enabled: z.boolean().default(false),
+      displayName: z.string().default("Stripe"),
+      publishableKey: z.string().default(""),
+      secretKey: z.string().default(""),
+    }),
+    cod: z.object({
+      enabled: z.boolean().default(false),
+      displayName: z.string().default("Cash on Delivery"),
+      instructions: z.string().default("Pay when your order is delivered."),
+    }),
+    bankTransfer: z.object({
+      enabled: z.boolean().default(false),
+      displayName: z.string().default("Bank Transfer"),
+      instructions: z.string().default("Transfer the amount to our bank account."),
+      accountDetails: z.string().default(""),
+    }),
+  }).default({}),
 });
 
 export type AboutInput = z.infer<typeof aboutSchema>;

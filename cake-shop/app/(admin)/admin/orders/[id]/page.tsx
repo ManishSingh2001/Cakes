@@ -14,6 +14,7 @@ import {
 } from "@/components/ui/table";
 import { notFound } from "next/navigation";
 import { OrderStatusUpdater } from "./status-updater";
+import { PaymentUpdater } from "./payment-updater";
 
 export const dynamic = "force-dynamic";
 
@@ -170,21 +171,28 @@ export default async function OrderDetailPage({
           <CardHeader>
             <CardTitle>Payment Info</CardTitle>
           </CardHeader>
-          <CardContent className="space-y-1 text-sm">
-            <p>
-              Method:{" "}
+          <CardContent className="space-y-3 text-sm">
+            <div className="flex items-center justify-between">
+              <span className="text-muted-foreground">Method</span>
               <span className="font-medium uppercase">{payment.method}</span>
-            </p>
-            <p>
-              Status:{" "}
-              <Badge variant="secondary" className="capitalize">
-                {payment.status}
-              </Badge>
-            </p>
+            </div>
+            <PaymentUpdater
+              orderId={id}
+              method={payment.method}
+              currentStatus={payment.status}
+            />
             {payment.razorpayPaymentId && (
-              <p>Payment ID: {payment.razorpayPaymentId}</p>
+              <div className="flex items-center justify-between">
+                <span className="text-muted-foreground">Payment ID</span>
+                <span className="font-mono text-xs">{payment.razorpayPaymentId}</span>
+              </div>
             )}
-            {payment.paidAt && <p>Paid at: {formatDate(payment.paidAt)}</p>}
+            {payment.paidAt && (
+              <div className="flex items-center justify-between">
+                <span className="text-muted-foreground">Paid at</span>
+                <span>{formatDate(payment.paidAt)}</span>
+              </div>
+            )}
           </CardContent>
         </Card>
       </div>

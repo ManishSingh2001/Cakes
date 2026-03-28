@@ -4,13 +4,13 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 
 interface OrderSuccessPageProps {
-  searchParams: Promise<{ orderId?: string }>;
+  searchParams: Promise<{ orderId?: string; orderNumber?: string }>;
 }
 
 export default async function OrderSuccessPage({
   searchParams,
 }: OrderSuccessPageProps) {
-  const { orderId } = await searchParams;
+  const { orderId, orderNumber } = await searchParams;
 
   return (
     <div className="container mx-auto max-w-lg px-4 py-16">
@@ -25,10 +25,10 @@ export default async function OrderSuccessPage({
             cake right away!
           </p>
 
-          {orderId && (
+          {(orderNumber || orderId) && (
             <div className="rounded-lg bg-muted px-4 py-3">
               <p className="text-sm text-muted-foreground">Order ID</p>
-              <p className="font-mono font-bold text-lg">{orderId}</p>
+              <p className="font-mono font-bold text-lg">{orderNumber || orderId}</p>
             </div>
           )}
 
