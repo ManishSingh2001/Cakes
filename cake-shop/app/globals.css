@@ -40,9 +40,9 @@
   --color-popover: var(--popover);
   --color-card-foreground: var(--card-foreground);
   --color-card: var(--card);
-  --color-cake-gold: #D4A574;
-  --color-cake-brown: #8B4513;
-  --color-cake-cream: #F5E6D3;
+  --color-cake-gold: var(--cake-gold);
+  --color-cake-brown: var(--cake-brown);
+  --color-cake-cream: var(--cake-cream);
   --color-cake-pink: #F8C8DC;
   --color-cake-dark: #3E2723;
   --radius-sm: calc(var(--radius) * 0.6);
@@ -55,6 +55,9 @@
 }
 
 :root {
+  --cake-gold: #D4A574;
+  --cake-brown: #8B4513;
+  --cake-cream: #F5E6D3;
   --background: oklch(0.99 0.002 80);
   --foreground: oklch(0.2 0.04 30);
   --card: oklch(1 0 0);

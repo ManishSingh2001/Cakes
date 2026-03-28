@@ -78,7 +78,9 @@ export default function SettingsPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(data),
       });
+      const result = await res.json();
       if (!res.ok) throw new Error();
+      if (result.data) reset(result.data);
       toast.success("Settings saved");
     } catch {
       toast.error("Failed to save settings");
@@ -167,11 +169,13 @@ export default function SettingsPage() {
                 <div className="flex items-center gap-2">
                   <Input
                     type="color"
-                    {...register("theme.primaryColor")}
+                    value={watch("theme.primaryColor")}
+                    onChange={(e) => setValue("theme.primaryColor", e.target.value)}
                     className="h-10 w-14 cursor-pointer p-1"
                   />
                   <Input
-                    {...register("theme.primaryColor")}
+                    value={watch("theme.primaryColor")}
+                    onChange={(e) => setValue("theme.primaryColor", e.target.value)}
                     className="flex-1"
                   />
                 </div>
@@ -181,11 +185,13 @@ export default function SettingsPage() {
                 <div className="flex items-center gap-2">
                   <Input
                     type="color"
-                    {...register("theme.secondaryColor")}
+                    value={watch("theme.secondaryColor")}
+                    onChange={(e) => setValue("theme.secondaryColor", e.target.value)}
                     className="h-10 w-14 cursor-pointer p-1"
                   />
                   <Input
-                    {...register("theme.secondaryColor")}
+                    value={watch("theme.secondaryColor")}
+                    onChange={(e) => setValue("theme.secondaryColor", e.target.value)}
                     className="flex-1"
                   />
                 </div>
@@ -195,11 +201,13 @@ export default function SettingsPage() {
                 <div className="flex items-center gap-2">
                   <Input
                     type="color"
-                    {...register("theme.accentColor")}
+                    value={watch("theme.accentColor")}
+                    onChange={(e) => setValue("theme.accentColor", e.target.value)}
                     className="h-10 w-14 cursor-pointer p-1"
                   />
                   <Input
-                    {...register("theme.accentColor")}
+                    value={watch("theme.accentColor")}
+                    onChange={(e) => setValue("theme.accentColor", e.target.value)}
                     className="flex-1"
                   />
                 </div>

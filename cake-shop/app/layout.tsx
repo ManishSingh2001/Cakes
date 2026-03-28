@@ -3,6 +3,7 @@ import { Playfair_Display, Lato } from "next/font/google";
 import { Toaster } from "sonner";
 import { ThemeProvider } from "@/components/providers/theme-provider";
 import { TooltipProvider } from "@/components/ui/tooltip";
+import { connection } from "next/server";
 import { connectDB } from "@/lib/db";
 import { SiteSettings } from "@/lib/models/SiteSettings";
 import "./globals.css";
@@ -31,6 +32,7 @@ export const metadata: Metadata = {
 
 async function getThemeColors() {
   try {
+    await connection();
     await connectDB();
     const settings = await SiteSettings.findOne().lean();
     if (settings?.theme) {
@@ -62,9 +64,9 @@ export default async function RootLayout({
       <body
         className={`${playfair.variable} ${lato.variable} font-body antialiased`}
         style={{
-          "--color-cake-gold": theme.primaryColor,
-          "--color-cake-brown": theme.secondaryColor,
-          "--color-cake-cream": theme.accentColor,
+          "--cake-gold": theme.primaryColor,
+          "--cake-brown": theme.secondaryColor,
+          "--cake-cream": theme.accentColor,
         } as React.CSSProperties}
       >
         <ThemeProvider
