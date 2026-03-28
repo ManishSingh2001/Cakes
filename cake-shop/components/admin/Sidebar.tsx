@@ -18,6 +18,7 @@ import {
   ImageIcon,
   PanelBottom,
   Settings,
+  Upload,
   Menu,
   X,
 } from "lucide-react";
@@ -36,6 +37,7 @@ const sidebarLinks = [
   { label: "Updates", href: "/admin/updates", icon: FileText },
   { label: "Visit", href: "/admin/visit", icon: MapPin },
   { label: "Pages", href: "/admin/pages", icon: File },
+  { label: "Bulk Upload", href: "/admin/bulk-upload", icon: Upload },
   { label: "Media", href: "/admin/media", icon: ImageIcon },
   { label: "Footer", href: "/admin/footer", icon: PanelBottom },
   { label: "Settings", href: "/admin/settings", icon: Settings },
