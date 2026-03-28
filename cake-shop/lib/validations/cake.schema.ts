@@ -1,9 +1,9 @@
 import { z } from "zod";
 
 export const priceOptionSchema = z.object({
-  weight: z.number().positive("Weight must be positive"),
-  costPrice: z.number().min(0, "Cost price must be non-negative"),
-  sellPrice: z.number().positive("Sell price must be positive"),
+  weight: z.coerce.number().positive("Weight must be positive"),
+  costPrice: z.coerce.number().min(0, "Cost price must be non-negative"),
+  sellPrice: z.coerce.number().positive("Sell price must be positive"),
 });
 
 export const cakeSchema = z.object({
@@ -14,13 +14,13 @@ export const cakeSchema = z.object({
   category: z.string().min(1, "Category is required"),
   slug: z.string().min(1, "Slug is required"),
   images: z
-    .array(z.object({ url: z.string().url(), alt: z.string().default("") }))
+    .array(z.object({ url: z.string().min(1), alt: z.string().default("") }))
     .default([]),
   prices: z.array(priceOptionSchema).min(1, "At least one price option is required"),
   tags: z.array(z.string()).default([]),
   isFeatured: z.boolean().default(false),
   isAvailable: z.boolean().default(true),
-  order: z.number().default(0),
+  order: z.coerce.number().default(0),
 });
 
 export const reviewSchema = z.object({

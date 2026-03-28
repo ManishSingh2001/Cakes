@@ -84,7 +84,7 @@ export default function CakesPage() {
     try {
       const res = await fetch("/api/admin/cakes");
       const data = await res.json();
-      setCakes(data);
+      setCakes(data.data || []);
     } catch {
       toast.error("Failed to load cakes");
     } finally {
@@ -121,19 +121,18 @@ export default function CakesPage() {
     setDialogOpen(true);
   };
 
-  const openEdit = async (id: string) => {
-    try {
-      const res = await fetch(`/api/admin/cakes/${id}`);
-      const data = await res.json();
-      setEditing(id);
-      reset({
-        ...data,
-        tags: data.tags?.join(", ") || "",
-      });
-      setDialogOpen(true);
-    } catch {
+  const openEdit = (id: string) => {
+    const cake = cakes.find((c) => c._id === id);
+    if (!cake) {
       toast.error("Failed to load cake");
+      return;
     }
+    setEditing(id);
+    reset({
+      ...cake,
+      tags: cake.tags?.join(", ") || "",
+    });
+    setDialogOpen(true);
   };
 
   const onSubmit = async (data: CakeForm) => {
@@ -146,18 +145,22 @@ export default function CakesPage() {
           .filter(Boolean),
       };
 
-      const url = editing
-        ? `/api/admin/cakes/${editing}`
-        : "/api/admin/cakes";
       const method = editing ? "PUT" : "POST";
 
-      const res = await fetch(url, {
+      const res = await fetch("/api/admin/cakes", {
         method,
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(body),
+        body: JSON.stringify(editing ? { ...body, _id: editing } : body),
       });
 
-      if (!res.ok) throw new Error();
+      if (!res.ok) {
+        const err = await res.json().catch(() => null);
+        const msg = err?.errors
+          ? Object.values(err.errors).flat().join(", ")
+          : err?.message || "Failed to save cake";
+        toast.error(msg);
+        return;
+      }
       toast.success(editing ? "Cake updated" : "Cake created");
       setDialogOpen(false);
       fetchCakes();
@@ -169,7 +172,7 @@ export default function CakesPage() {
   const deleteCake = async (id: string) => {
     if (!confirm("Are you sure you want to delete this cake?")) return;
     try {
-      const res = await fetch(`/api/admin/cakes/${id}`, { method: "DELETE" });
+      const res = await fetch(`/api/admin/cakes?_id=${id}`, { method: "DELETE" });
       if (!res.ok) throw new Error();
       toast.success("Cake deleted");
       fetchCakes();

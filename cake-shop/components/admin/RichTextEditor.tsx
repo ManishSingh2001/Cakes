@@ -38,6 +38,7 @@ export function RichTextEditor({
   placeholder = "Start writing...",
 }: RichTextEditorProps) {
   const editor = useEditor({
+    immediatelyRender: false,
     extensions: [
       StarterKit.configure({
         heading: { levels: [1, 2, 3] },

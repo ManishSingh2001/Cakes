@@ -66,7 +66,7 @@ export default function UpdatesPage() {
     try {
       const res = await fetch("/api/admin/updates");
       const data = await res.json();
-      setUpdates(data);
+      setUpdates(data.data || []);
     } catch {
       toast.error("Failed to load updates");
     } finally {
@@ -100,19 +100,18 @@ export default function UpdatesPage() {
     setDialogOpen(true);
   };
 
-  const openEdit = async (id: string) => {
-    try {
-      const res = await fetch(`/api/admin/updates/${id}`);
-      const data = await res.json();
-      setEditing(id);
-      reset({
-        ...data,
-        tags: data.tags?.join(", ") || "",
-      });
-      setDialogOpen(true);
-    } catch {
+  const openEdit = (id: string) => {
+    const update = updates.find((u) => u._id === id);
+    if (!update) {
       toast.error("Failed to load update");
+      return;
     }
+    setEditing(id);
+    reset({
+      ...update,
+      tags: update.tags?.join(", ") || "",
+    });
+    setDialogOpen(true);
   };
 
   const onSubmit = async (data: UpdateForm) => {
@@ -125,15 +124,12 @@ export default function UpdatesPage() {
           .filter(Boolean),
       };
 
-      const url = editing
-        ? `/api/admin/updates/${editing}`
-        : "/api/admin/updates";
       const method = editing ? "PUT" : "POST";
 
-      const res = await fetch(url, {
+      const res = await fetch("/api/admin/updates", {
         method,
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(body),
+        body: JSON.stringify(editing ? { ...body, _id: editing } : body),
       });
 
       if (!res.ok) throw new Error();
@@ -148,7 +144,7 @@ export default function UpdatesPage() {
   const deleteUpdate = async (id: string) => {
     if (!confirm("Are you sure you want to delete this post?")) return;
     try {
-      const res = await fetch(`/api/admin/updates/${id}`, {
+      const res = await fetch(`/api/admin/updates?_id=${id}`, {
         method: "DELETE",
       });
       if (!res.ok) throw new Error();

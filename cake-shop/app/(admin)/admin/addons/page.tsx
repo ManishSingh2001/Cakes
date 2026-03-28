@@ -75,7 +75,7 @@ export default function AddonsPage() {
     try {
       const res = await fetch("/api/admin/addons");
       const data = await res.json();
-      setAddons(data);
+      setAddons(data.data || []);
     } catch {
       toast.error("Failed to load addons");
     } finally {
@@ -109,29 +109,25 @@ export default function AddonsPage() {
     setDialogOpen(true);
   };
 
-  const openEdit = async (id: string) => {
-    try {
-      const res = await fetch(`/api/admin/addons/${id}`);
-      const data = await res.json();
-      setEditing(id);
-      reset(data);
-      setDialogOpen(true);
-    } catch {
+  const openEdit = (id: string) => {
+    const addon = addons.find((a) => a._id === id);
+    if (!addon) {
       toast.error("Failed to load addon");
+      return;
     }
+    setEditing(id);
+    reset(addon);
+    setDialogOpen(true);
   };
 
   const onSubmit = async (data: AddonForm) => {
     try {
-      const url = editing
-        ? `/api/admin/addons/${editing}`
-        : "/api/admin/addons";
       const method = editing ? "PUT" : "POST";
 
-      const res = await fetch(url, {
+      const res = await fetch("/api/admin/addons", {
         method,
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(data),
+        body: JSON.stringify(editing ? { ...data, _id: editing } : data),
       });
 
       if (!res.ok) throw new Error();
@@ -146,7 +142,7 @@ export default function AddonsPage() {
   const deleteAddon = async (id: string) => {
     if (!confirm("Are you sure you want to delete this addon?")) return;
     try {
-      const res = await fetch(`/api/admin/addons/${id}`, { method: "DELETE" });
+      const res = await fetch(`/api/admin/addons?_id=${id}`, { method: "DELETE" });
       if (!res.ok) throw new Error();
       toast.success("Addon deleted");
       fetchAddons();

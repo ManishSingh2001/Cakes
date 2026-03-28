@@ -23,12 +23,15 @@ export function slugify(text: string): string {
     .replace(/^-+|-+$/g, "");
 }
 
-export function formatDate(date: Date | string): string {
+export function formatDate(date: Date | string | undefined | null): string {
+  if (!date) return "";
+  const d = new Date(date);
+  if (isNaN(d.getTime())) return "";
   return new Intl.DateTimeFormat("en-IN", {
     year: "numeric",
     month: "long",
     day: "numeric",
-  }).format(new Date(date));
+  }).format(d);
 }
 
 export function generateOrderId(): string {
