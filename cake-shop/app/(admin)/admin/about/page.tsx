@@ -45,8 +45,8 @@ export default function AboutPage() {
   useEffect(() => {
     fetch("/api/admin/about")
       .then((r) => r.json())
-      .then((data) => {
-        if (data) reset(data);
+      .then((res) => {
+        if (res.success && res.data) reset(res.data);
       })
       .catch(() => toast.error("Failed to load about data"))
       .finally(() => setLoading(false));

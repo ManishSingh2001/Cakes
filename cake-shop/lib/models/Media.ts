@@ -12,6 +12,7 @@ export interface IMedia {
   alt: string;
   folder: string;
   uploadedBy: mongoose.Types.ObjectId;
+  uploadthingKey?: string;
   createdAt: Date;
 }
 
@@ -27,6 +28,7 @@ const mediaSchema = new Schema<IMedia>(
     alt: { type: String, default: "" },
     folder: { type: String, default: "general" },
     uploadedBy: { type: Schema.Types.ObjectId, ref: "User" },
+    uploadthingKey: { type: String },
   },
   { timestamps: true }
 );

@@ -64,8 +64,8 @@ export default function SettingsPage() {
   useEffect(() => {
     fetch("/api/admin/settings")
       .then((r) => r.json())
-      .then((data) => {
-        if (data) reset(data);
+      .then((res) => {
+        if (res.success && res.data) reset(res.data);
       })
       .catch(() => toast.error("Failed to load settings"))
       .finally(() => setLoading(false));

@@ -1,7 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
+import { UTApi } from "uploadthing/server";
 import { auth } from "@/lib/auth";
 import { connectDB } from "@/lib/db";
 import { Media } from "@/lib/models/Media";
+
+const utapi = new UTApi();
 
 export async function GET(request: NextRequest) {
   try {
@@ -70,17 +73,31 @@ export async function POST(request: NextRequest) {
     const folder = (formData.get("folder") as string) || "general";
     const alt = (formData.get("alt") as string) || "";
 
-    // Save file metadata to DB (actual file storage to be implemented)
+    // Upload file to UploadThing
+    const uploadResponse = await utapi.uploadFiles(file);
+
+    if (uploadResponse.error) {
+      console.error("UploadThing error:", uploadResponse.error);
+      return NextResponse.json(
+        { success: false, message: "File upload failed" },
+        { status: 500 }
+      );
+    }
+
+    const { url, size, name, key } = uploadResponse.data;
+
+    // Save file metadata to DB
     await connectDB();
     const media = await Media.create({
-      filename: file.name,
-      url: `/uploads/${folder}/${file.name}`,
-      thumbnailUrl: "",
+      filename: name,
+      url,
+      thumbnailUrl: url,
       mimeType: file.type,
-      size: file.size,
+      size,
       alt,
       folder,
       uploadedBy: session.user.id,
+      uploadthingKey: key,
     });
 
     return NextResponse.json({ success: true, data: media }, { status: 201 });
@@ -110,7 +127,7 @@ export async function DELETE(request: NextRequest) {
     }
 
     const { searchParams } = new URL(request.url);
-    const _id = searchParams.get("_id");
+    const _id = searchParams.get("_id") || searchParams.get("id");
 
     if (!_id) {
       return NextResponse.json(
@@ -127,6 +144,15 @@ export async function DELETE(request: NextRequest) {
         { success: false, message: "Media not found" },
         { status: 404 }
       );
+    }
+
+    // Delete from UploadThing if key exists
+    if (media.uploadthingKey) {
+      try {
+        await utapi.deleteFiles(media.uploadthingKey);
+      } catch (err) {
+        console.error("Failed to delete from UploadThing:", err);
+      }
     }
 
     return NextResponse.json({ success: true, message: "Media deleted successfully" });

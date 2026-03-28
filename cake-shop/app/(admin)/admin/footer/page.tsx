@@ -62,8 +62,8 @@ export default function FooterPage() {
   useEffect(() => {
     fetch("/api/admin/footer")
       .then((r) => r.json())
-      .then((data) => {
-        if (data) reset(data);
+      .then((res) => {
+        if (res.success && res.data) reset(res.data);
       })
       .catch(() => toast.error("Failed to load footer data"))
       .finally(() => setLoading(false));

@@ -42,8 +42,8 @@ export default function HeroPage() {
   useEffect(() => {
     fetch("/api/admin/hero")
       .then((r) => r.json())
-      .then((data) => {
-        if (data) reset(data);
+      .then((res) => {
+        if (res.success && res.data) reset(res.data);
       })
       .catch(() => toast.error("Failed to load hero data"))
       .finally(() => setLoading(false));

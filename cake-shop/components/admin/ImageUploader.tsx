@@ -42,7 +42,7 @@ export function ImageUploader({
         if (!res.ok) throw new Error("Upload failed");
 
         const data = await res.json();
-        onChange(data.url);
+        onChange(data.data.url);
         toast.success("Image uploaded");
       } catch {
         toast.error("Failed to upload image");

@@ -46,8 +46,8 @@ export default function EditPagePage() {
   useEffect(() => {
     fetch(`/api/admin/pages/${id}`)
       .then((r) => r.json())
-      .then((data) => {
-        if (data) reset(data);
+      .then((res) => {
+        if (res.success && res.data) reset(res.data);
       })
       .catch(() => toast.error("Failed to load page"))
       .finally(() => setLoading(false));

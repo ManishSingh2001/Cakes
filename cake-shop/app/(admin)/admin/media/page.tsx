@@ -50,7 +50,7 @@ export default function MediaPage() {
       const query = folder !== "all" ? `?folder=${folder}` : "";
       const res = await fetch(`/api/admin/media${query}`);
       const data = await res.json();
-      setMedia(data);
+      setMedia(data.data);
     } catch {
       toast.error("Failed to load media");
     } finally {
@@ -88,7 +88,7 @@ export default function MediaPage() {
   const deleteMedia = async (id: string) => {
     if (!confirm("Delete this file?")) return;
     try {
-      const res = await fetch(`/api/admin/media/${id}`, { method: "DELETE" });
+      const res = await fetch(`/api/admin/media?_id=${id}`, { method: "DELETE" });
       if (!res.ok) throw new Error();
       toast.success("File deleted");
       setMedia((prev) => prev.filter((m) => m._id !== id));
