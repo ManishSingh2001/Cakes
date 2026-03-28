@@ -62,7 +62,7 @@ export async function POST(request: NextRequest) {
         razorpaySignature: razorpay_signature,
         paidAt: new Date(),
       },
-      { new: true }
+      { returnDocument: "after" }
     );
 
     if (!order) {

@@ -165,6 +165,7 @@ export default async function OrderDetailPage({
         variant="ghost"
         size="sm"
         className="mb-4"
+        nativeButton={false}
         render={<Link href="/orders" />}
       >
         <ArrowLeft className="mr-2 h-4 w-4" />

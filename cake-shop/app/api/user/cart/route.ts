@@ -2,10 +2,12 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { connectDB } from "@/lib/db";
 import { Cart } from "@/lib/models/Cart";
+import { Cake } from "@/lib/models/Cake";
+import { Addon } from "@/lib/models/Addon";
 
-function calculateTotalAmount(items: Array<{ price: number; quantity: number; addons?: Array<{ price: number; quantity: number }> }>) {
+function calculateTotalAmount(items: Array<{ priceOption: { sellPrice: number }; quantity: number; addons?: Array<{ price: number; quantity: number }> }>) {
   return items.reduce((total, item) => {
-    const itemTotal = item.price * item.quantity;
+    const itemTotal = item.priceOption.sellPrice * item.quantity;
     const addonsTotal = (item.addons || []).reduce(
       (sum, addon) => sum + addon.price * addon.quantity,
       0
@@ -26,9 +28,7 @@ export async function GET() {
 
     await connectDB();
 
-    const cart = await Cart.findOne({ user: session.user.id })
-      .populate("items.cake")
-      .populate("items.addons.addon");
+    const cart = await Cart.findOne({ userId: session.user.id });
 
     if (!cart) {
       return NextResponse.json({
@@ -72,31 +72,53 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    let cart = await Cart.findOne({ user: session.user.id });
+    // Look up the cake to get name and image
+    const cake = await Cake.findById(cakeId);
+    if (!cake) {
+      return NextResponse.json(
+        { success: false, message: "Cake not found" },
+        { status: 404 }
+      );
+    }
+
+    let cart = await Cart.findOne({ userId: session.user.id });
 
     if (!cart) {
       cart = new Cart({
-        user: session.user.id,
+        userId: session.user.id,
         items: [],
         totalAmount: 0,
       });
     }
 
     const newItem: Record<string, unknown> = {
-      cake: cakeId,
-      priceOption,
-      price: priceOption.price,
+      cakeId,
+      name: cake.name,
+      image: cake.images?.[0]?.url || "",
+      priceOption: {
+        weight: priceOption.weight,
+        sellPrice: priceOption.sellPrice,
+      },
       quantity,
       cakeMessage: cakeMessage || "",
     };
 
     if (addons && addons.length > 0) {
+      const addonDocs = await Addon.find({
+        _id: { $in: addons.map((a: { addonId: string }) => a.addonId) },
+      });
+      const addonMap = new Map(addonDocs.map((a) => [a._id.toString(), a]));
+
       newItem.addons = addons.map(
-        (addon: { addonId: string; quantity: number; price?: number }) => ({
-          addon: addon.addonId,
-          quantity: addon.quantity,
-          price: addon.price || 0,
-        })
+        (addon: { addonId: string; quantity: number }) => {
+          const doc = addonMap.get(addon.addonId);
+          return {
+            addonId: addon.addonId,
+            name: doc?.name || "Addon",
+            price: doc?.price || 0,
+            quantity: addon.quantity,
+          };
+        }
       );
     }
 
@@ -146,7 +168,7 @@ export async function PUT(request: NextRequest) {
       );
     }
 
-    const cart = await Cart.findOne({ user: session.user.id });
+    const cart = await Cart.findOne({ userId: session.user.id });
 
     if (!cart) {
       return NextResponse.json(
@@ -201,7 +223,7 @@ export async function DELETE(request: NextRequest) {
       );
     }
 
-    const cart = await Cart.findOne({ user: session.user.id });
+    const cart = await Cart.findOne({ userId: session.user.id });
 
     if (!cart) {
       return NextResponse.json(

@@ -39,7 +39,7 @@ export default function ProfilePage() {
       const res = await fetch("/api/user/profile");
       if (!res.ok) throw new Error("Failed to fetch profile");
       const data = await res.json();
-      setProfile(data);
+      setProfile(data.user);
     } catch {
       toast.error("Failed to load profile");
     } finally {
@@ -66,7 +66,7 @@ export default function ProfilePage() {
       if (!res.ok) throw new Error("Failed to update profile");
 
       const data = await res.json();
-      setProfile(data);
+      setProfile(data.user);
       toast.success("Profile updated successfully");
     } catch {
       toast.error("Failed to update profile");

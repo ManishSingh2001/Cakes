@@ -111,7 +111,7 @@ export async function DELETE(request: NextRequest) {
     const user = await User.findByIdAndUpdate(
       session.user.id,
       { $pull: { wishlist: cakeId } },
-      { new: true }
+      { returnDocument: "after" }
     );
 
     if (!user) {

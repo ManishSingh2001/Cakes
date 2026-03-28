@@ -65,7 +65,7 @@ export default async function OrdersPage() {
           You haven&apos;t placed any orders yet. Start exploring our delicious
           cakes!
         </p>
-        <Button render={<Link href="/" />}>Browse Cakes</Button>
+        <Button nativeButton={false} render={<Link href="/" />}>Browse Cakes</Button>
       </div>
     );
   }

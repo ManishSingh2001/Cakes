@@ -15,9 +15,10 @@ export async function middleware(req: NextRequest) {
   const isApiUserRoute = pathname.startsWith("/api/user");
   const isLoginPage = pathname === "/login" || pathname === "/admin/login";
   const isRegisterPage = pathname === "/register";
+  const isRegisterApi = pathname.startsWith("/api/user/register");
 
-  // Allow login & register pages
-  if (isLoginPage || isRegisterPage) return NextResponse.next();
+  // Allow login, register pages and register API
+  if (isLoginPage || isRegisterPage || isRegisterApi) return NextResponse.next();
 
   const token = await getToken({ req, secret: process.env.NEXTAUTH_SECRET });
 

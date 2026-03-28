@@ -63,7 +63,7 @@ export async function PUT(request: NextRequest) {
     const settings = await SiteSettings.findOneAndUpdate(
       {},
       validation.data,
-      { new: true, upsert: true, runValidators: true }
+      { returnDocument: "after", upsert: true, runValidators: true }
     );
 
     return NextResponse.json({ success: true, data: settings });

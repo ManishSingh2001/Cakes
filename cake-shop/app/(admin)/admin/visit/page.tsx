@@ -69,11 +69,11 @@ export default function VisitPage() {
   useEffect(() => {
     fetch("/api/admin/visit")
       .then((r) => r.json())
-      .then((data) => {
-        if (data) {
+      .then((res) => {
+        if (res.success && res.data) {
           // Ensure all 7 days are present
           const hours = DAYS.map((day) => {
-            const existing = data.businessHours?.find(
+            const existing = res.data.businessHours?.find(
               (h: Record<string, string>) => h.day === day
             );
             return (
@@ -85,7 +85,7 @@ export default function VisitPage() {
               }
             );
           });
-          reset({ ...data, businessHours: hours });
+          reset({ ...res.data, businessHours: hours });
         }
       })
       .catch(() => toast.error("Failed to load visit data"))
@@ -238,14 +238,28 @@ export default function VisitPage() {
           <CardHeader>
             <CardTitle>Map</CardTitle>
           </CardHeader>
-          <CardContent>
-            <Label>Google Maps Embed URL</Label>
-            <Input
-              {...register("mapEmbedUrl")}
-              placeholder="https://www.google.com/maps/embed?..."
-            />
+          <CardContent className="space-y-3">
+            <div>
+              <Label>Google Maps Embed URL or Iframe Code</Label>
+              <Textarea
+                {...register("mapEmbedUrl", {
+                  setValueAs: (v: string) => {
+                    if (!v) return "";
+                    // Extract src from pasted <iframe> tag
+                    const srcMatch = v.match(/src="([^"]+)"/);
+                    if (srcMatch) return srcMatch[1];
+                    return v.trim();
+                  },
+                })}
+                placeholder='Paste the embed URL or full <iframe> code from Google Maps'
+                rows={3}
+              />
+              <p className="mt-1 text-xs text-muted-foreground">
+                Go to Google Maps → Share → Embed a map → Copy the iframe code or URL
+              </p>
+            </div>
             {watch("mapEmbedUrl") && (
-              <div className="mt-3 aspect-video overflow-hidden rounded-lg border">
+              <div className="aspect-video overflow-hidden rounded-lg border">
                 <iframe
                   src={watch("mapEmbedUrl")}
                   width="100%"

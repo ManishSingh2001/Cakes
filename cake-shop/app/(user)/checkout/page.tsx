@@ -40,20 +40,21 @@ declare global {
 
 interface CartItem {
   _id: string;
-  cake: {
-    _id: string;
-    name: string;
-    images: { url: string; alt: string }[];
+  cakeId: string;
+  name: string;
+  image: string;
+  priceOption: {
+    weight: number;
+    sellPrice: number;
   };
-  weight: number;
-  price: number;
   quantity: number;
   cakeMessage?: string;
-  addons: { name: string; price: number }[];
+  addons: { addonId: string; name: string; price: number; quantity: number }[];
 }
 
 interface Cart {
   items: CartItem[];
+  totalAmount: number;
 }
 
 const DELIVERY_SLOTS = [
@@ -96,7 +97,7 @@ export default function CheckoutPage() {
       const res = await fetch("/api/user/cart");
       if (!res.ok) throw new Error("Failed to fetch cart");
       const data = await res.json();
-      setCart(data);
+      setCart(data.cart || { items: [], totalAmount: 0 });
     } catch {
       toast.error("Failed to load cart");
     } finally {
@@ -119,8 +120,8 @@ export default function CheckoutPage() {
   }, []);
 
   const getItemSubtotal = (item: CartItem) => {
-    const addonsTotal = item.addons.reduce((sum, a) => sum + a.price, 0);
-    return (item.price + addonsTotal) * item.quantity;
+    const addonsTotal = (item.addons || []).reduce((sum, a) => sum + a.price * a.quantity, 0);
+    return item.priceOption.sellPrice * item.quantity + addonsTotal;
   };
 
   const subtotal = cart
@@ -414,13 +415,13 @@ export default function CheckoutPage() {
                 <CardTitle>Order Summary</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
-                {cart.items.map((item) => (
-                  <div key={item._id} className="flex gap-3">
+                {cart.items.map((item, index) => (
+                  <div key={item._id || index} className="flex gap-3">
                     <div className="relative h-14 w-14 shrink-0 overflow-hidden rounded-md bg-muted">
-                      {item.cake.images[0] ? (
+                      {item.image ? (
                         <Image
-                          src={item.cake.images[0].url}
-                          alt={item.cake.name}
+                          src={item.image}
+                          alt={item.name}
                           fill
                           className="object-cover"
                           sizes="56px"
@@ -433,10 +434,10 @@ export default function CheckoutPage() {
                     </div>
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-medium line-clamp-1">
-                        {item.cake.name}
+                        {item.name}
                       </p>
                       <p className="text-xs text-muted-foreground">
-                        {item.weight} kg x {item.quantity}
+                        {item.priceOption.weight} kg x {item.quantity}
                       </p>
                     </div>
                     <span className="text-sm font-medium">

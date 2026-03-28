@@ -37,6 +37,7 @@ export default async function OrderSuccessPage({
               <Button
                 size="lg"
                 className="w-full"
+                nativeButton={false}
                 render={<Link href={`/orders/${orderId}`} />}
               >
                 <Package className="mr-2 h-4 w-4" />
@@ -47,6 +48,7 @@ export default async function OrderSuccessPage({
               variant="outline"
               size="lg"
               className="w-full"
+              nativeButton={false}
               render={<Link href="/" />}
             >
               Continue Shopping

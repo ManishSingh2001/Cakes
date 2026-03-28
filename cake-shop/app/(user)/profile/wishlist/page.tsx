@@ -30,7 +30,7 @@ export default function WishlistPage() {
       const res = await fetch("/api/user/wishlist");
       if (!res.ok) throw new Error("Failed to fetch wishlist");
       const data = await res.json();
-      setWishlist(data.cakes ?? data ?? []);
+      setWishlist(data.wishlist ?? []);
     } catch {
       toast.error("Failed to load wishlist");
     } finally {
