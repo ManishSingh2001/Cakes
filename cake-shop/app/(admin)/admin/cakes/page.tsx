@@ -25,8 +25,17 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { DataTable, Column } from "@/components/admin/DataTable";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import { ImageUploader } from "@/components/admin/ImageUploader";
+import { Search, Loader2 } from "lucide-react";
+import { useDebounce } from "@/hooks/useDebounce";
 
 interface CakeForm {
   _id?: string;
@@ -46,19 +55,29 @@ interface CakeForm {
 interface CakeRow {
   _id: string;
   name: string;
+  slug: string;
+  description: string;
   caketype: string;
   type: string;
   category: string;
+  images: { url: string; alt: string }[];
   isFeatured: boolean;
   isAvailable: boolean;
-  prices: { weight: number; sellPrice: number }[];
+  prices: { weight: number; costPrice: number; sellPrice: number }[];
+  tags: string[];
 }
 
 export default function CakesPage() {
   const [cakes, setCakes] = useState<CakeRow[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editing, setEditing] = useState<string | null>(null);
+  const [cursor, setCursor] = useState<string | null>(null);
+  const [hasMore, setHasMore] = useState(false);
+  const [total, setTotal] = useState<number>(0);
+  const [searchInput, setSearchInput] = useState("");
+  const searchQuery = useDebounce(searchInput, 400);
 
   const { register, handleSubmit, control, setValue, watch, reset } =
     useForm<CakeForm>({
@@ -80,21 +99,39 @@ export default function CakesPage() {
   const imagesField = useFieldArray({ control, name: "images" });
   const pricesField = useFieldArray({ control, name: "prices" });
 
-  const fetchCakes = useCallback(async () => {
+  const fetchCakes = useCallback(async (loadMore = false, search = "") => {
+    if (loadMore) setLoadingMore(true);
+    else setLoading(true);
     try {
-      const res = await fetch("/api/admin/cakes");
+      const params = new URLSearchParams({ limit: "20" });
+      if (search) params.set("search", search);
+      if (loadMore && cursor) params.set("cursor", cursor);
+
+      const res = await fetch(`/api/admin/cakes?${params}`);
       const data = await res.json();
-      setCakes(data.data || []);
+
+      if (loadMore) {
+        setCakes((prev) => [...prev, ...(data.data || [])]);
+      } else {
+        setCakes(data.data || []);
+        if (data.pagination?.total !== undefined) setTotal(data.pagination.total);
+      }
+      setCursor(data.pagination?.nextCursor || null);
+      setHasMore(data.pagination?.hasMore || false);
     } catch {
       toast.error("Failed to load cakes");
     } finally {
       setLoading(false);
+      setLoadingMore(false);
     }
-  }, []);
+  }, [cursor]);
 
   useEffect(() => {
-    fetchCakes();
-  }, [fetchCakes]);
+    setCakes([]);
+    setCursor(null);
+    fetchCakes(false, searchQuery);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchQuery]);
 
   const nameValue = watch("name");
   useEffect(() => {
@@ -163,7 +200,9 @@ export default function CakesPage() {
       }
       toast.success(editing ? "Cake updated" : "Cake created");
       setDialogOpen(false);
-      fetchCakes();
+      setCakes([]);
+      setCursor(null);
+      fetchCakes(false, searchQuery);
     } catch {
       toast.error("Failed to save cake");
     }
@@ -175,65 +214,13 @@ export default function CakesPage() {
       const res = await fetch(`/api/admin/cakes?_id=${id}`, { method: "DELETE" });
       if (!res.ok) throw new Error();
       toast.success("Cake deleted");
-      fetchCakes();
+      setCakes([]);
+      setCursor(null);
+      fetchCakes(false, searchQuery);
     } catch {
       toast.error("Failed to delete cake");
     }
   };
-
-  const columns: Column<CakeRow>[] = [
-    { header: "Name", accessorKey: "name" },
-    { header: "Type", cell: (row) => `${row.caketype} / ${row.type}` },
-    { header: "Category", accessorKey: "category" },
-    {
-      header: "Price",
-      cell: (row) =>
-        row.prices?.[0] ? formatPrice(row.prices[0].sellPrice) : "N/A",
-    },
-    {
-      header: "Featured",
-      cell: (row) =>
-        row.isFeatured ? (
-          <Badge>Featured</Badge>
-        ) : (
-          <Badge variant="secondary">No</Badge>
-        ),
-    },
-    {
-      header: "Available",
-      cell: (row) =>
-        row.isAvailable ? (
-          <Badge variant="secondary" className="bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300">
-            Yes
-          </Badge>
-        ) : (
-          <Badge variant="secondary" className="bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300">
-            No
-          </Badge>
-        ),
-    },
-    {
-      header: "Actions",
-      cell: (row) => (
-        <div className="flex items-center gap-2">
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => openEdit(row._id)}
-          >
-            <Pencil className="h-4 w-4" />
-          </Button>
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => deleteCake(row._id)}
-          >
-            <Trash2 className="h-4 w-4 text-destructive" />
-          </Button>
-        </div>
-      ),
-    },
-  ];
 
   if (loading) {
     return (
@@ -256,11 +243,95 @@ export default function CakesPage() {
         </Button>
       </div>
 
-      <DataTable<CakeRow>
-        columns={columns}
-        data={cakes}
-        searchKey={"name"}
-      />
+      {/* Search */}
+      <div className="relative max-w-sm">
+        <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+        <Input
+          placeholder="Search cakes..."
+          value={searchInput}
+          onChange={(e) => setSearchInput(e.target.value)}
+          className="pl-9"
+        />
+      </div>
+
+      {total > 0 && (
+        <p className="text-sm text-muted-foreground">
+          Showing {cakes.length} of {total} cakes
+        </p>
+      )}
+
+      <div className="rounded-md border">
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>Name</TableHead>
+              <TableHead>Type</TableHead>
+              <TableHead>Category</TableHead>
+              <TableHead>Price</TableHead>
+              <TableHead>Featured</TableHead>
+              <TableHead>Available</TableHead>
+              <TableHead>Actions</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {cakes.length === 0 ? (
+              <TableRow>
+                <TableCell colSpan={7} className="h-24 text-center text-muted-foreground">
+                  No cakes found.
+                </TableCell>
+              </TableRow>
+            ) : (
+              cakes.map((row) => (
+                <TableRow key={row._id}>
+                  <TableCell className="font-medium">{row.name}</TableCell>
+                  <TableCell>{row.caketype} / {row.type}</TableCell>
+                  <TableCell>{row.category}</TableCell>
+                  <TableCell>{row.prices?.[0] ? formatPrice(row.prices[0].sellPrice) : "N/A"}</TableCell>
+                  <TableCell>
+                    {row.isFeatured ? <Badge>Featured</Badge> : <Badge variant="secondary">No</Badge>}
+                  </TableCell>
+                  <TableCell>
+                    {row.isAvailable ? (
+                      <Badge variant="secondary" className="bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300">Yes</Badge>
+                    ) : (
+                      <Badge variant="secondary" className="bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300">No</Badge>
+                    )}
+                  </TableCell>
+                  <TableCell>
+                    <div className="flex items-center gap-2">
+                      <Button variant="ghost" size="icon" onClick={() => openEdit(row._id)}>
+                        <Pencil className="h-4 w-4" />
+                      </Button>
+                      <Button variant="ghost" size="icon" onClick={() => deleteCake(row._id)}>
+                        <Trash2 className="h-4 w-4 text-destructive" />
+                      </Button>
+                    </div>
+                  </TableCell>
+                </TableRow>
+              ))
+            )}
+          </TableBody>
+        </Table>
+      </div>
+
+      {hasMore && (
+        <div className="text-center">
+          <Button
+            variant="outline"
+            onClick={() => fetchCakes(true, searchQuery)}
+            disabled={loadingMore}
+          >
+            {loadingMore ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Loading...
+              </>
+            ) : (
+              "Load More"
+            )}
+          </Button>
+        </div>
+      )}
 
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
         <DialogContent className="max-h-[90vh] max-w-2xl overflow-y-auto">

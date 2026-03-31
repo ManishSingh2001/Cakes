@@ -11,53 +11,47 @@ export async function GET(request: NextRequest) {
     const type = searchParams.get("type");
     const category = searchParams.get("category");
     const search = searchParams.get("search");
-    const page = parseInt(searchParams.get("page") || "1", 10);
-    const limit = parseInt(searchParams.get("limit") || "12", 10);
+    const cursor = searchParams.get("cursor"); // _id of last item
+    const limit = Math.min(parseInt(searchParams.get("limit") || "12", 10), 50);
 
-    const filter: Record<string, unknown> = { isActive: true };
+    const filter: Record<string, unknown> = { isAvailable: true };
 
-    if (caketype) {
-      filter.cakeType = caketype;
-    }
-
-    if (type) {
-      filter.type = type;
-    }
-
-    if (category) {
-      filter.category = category;
-    }
+    if (caketype) filter.caketype = caketype;
+    if (type) filter.type = type;
+    if (category) filter.category = category;
 
     if (search) {
       filter.$or = [
         { name: { $regex: search, $options: "i" } },
-        { description: { $regex: search, $options: "i" } },
+        { tags: { $regex: search, $options: "i" } },
       ];
     }
 
-    const skip = (page - 1) * limit;
+    // Cursor pagination: fetch items after the cursor
+    if (cursor) {
+      filter._id = { $lt: cursor };
+    }
 
-    const [cakes, total] = await Promise.all([
-      Cake.find(filter)
-        .sort({ createdAt: -1 })
-        .skip(skip)
-        .limit(limit)
-        .lean(),
-      Cake.countDocuments(filter),
-    ]);
+    const cakes = await Cake.find(filter)
+      .sort({ _id: -1 })
+      .limit(limit + 1) // fetch one extra to check hasMore
+      .lean();
 
-    const totalPages = Math.ceil(total / limit);
+    const hasMore = cakes.length > limit;
+    if (hasMore) cakes.pop();
+
+    const nextCursor = cakes.length > 0 ? cakes[cakes.length - 1]._id : null;
+
+    // Total count for display (only on first page)
+    const total = !cursor ? await Cake.countDocuments(filter) : undefined;
 
     return NextResponse.json({
       success: true,
-      cakes,
+      cakes: JSON.parse(JSON.stringify(cakes)),
       pagination: {
-        page,
-        limit,
-        total,
-        totalPages,
-        hasNextPage: page < totalPages,
-        hasPrevPage: page > 1,
+        nextCursor,
+        hasMore,
+        ...(total !== undefined && { total }),
       },
     });
   } catch (error) {

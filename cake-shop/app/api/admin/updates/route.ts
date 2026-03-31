@@ -111,7 +111,7 @@ export async function PUT(request: NextRequest) {
     const update = await Update.findByIdAndUpdate(
       _id,
       validation.data,
-      { new: true, runValidators: true }
+      { returnDocument: "after", runValidators: true }
     );
 
     if (!update) {

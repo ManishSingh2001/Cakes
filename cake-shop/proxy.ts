@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { getToken } from "next-auth/jwt";
 
-export async function middleware(req: NextRequest) {
+export async function proxy(req: NextRequest) {
   const { pathname } = req.nextUrl;
   const isAdminRoute = pathname.startsWith("/admin");
   const isApiAdminRoute = pathname.startsWith("/api/admin");
@@ -15,9 +15,10 @@ export async function middleware(req: NextRequest) {
   const isApiUserRoute = pathname.startsWith("/api/user");
   const isLoginPage = pathname === "/login" || pathname === "/admin/login";
   const isRegisterPage = pathname === "/register";
+  const isRegisterApi = pathname.startsWith("/api/user/register");
 
-  // Allow login & register pages
-  if (isLoginPage || isRegisterPage) return NextResponse.next();
+  // Allow login, register pages and register API
+  if (isLoginPage || isRegisterPage || isRegisterApi) return NextResponse.next();
 
   const token = await getToken({ req, secret: process.env.NEXTAUTH_SECRET });
 

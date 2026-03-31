@@ -73,8 +73,8 @@ export async function PUT(request: NextRequest) {
     const { orderStatus, note } = validation.data;
 
     await connectDB();
-    const order = await Order.findOneAndUpdate(
-      { orderId },
+    const order = await Order.findByIdAndUpdate(
+      orderId,
       {
         orderStatus,
         $push: {
@@ -86,7 +86,7 @@ export async function PUT(request: NextRequest) {
           },
         },
       },
-      { new: true, runValidators: true }
+      { returnDocument: "after", runValidators: true }
     );
 
     if (!order) {

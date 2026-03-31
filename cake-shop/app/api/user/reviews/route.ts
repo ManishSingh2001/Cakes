@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { connectDB } from "@/lib/db";
 import { Cake } from "@/lib/models/Cake";
+import { Order } from "@/lib/models/Order";
+import { User } from "@/lib/models/User";
 
 async function recalculateCakeRating(cakeId: string) {
   const cake = await Cake.findById(cakeId);
@@ -32,12 +34,12 @@ export async function GET() {
     await connectDB();
 
     const cakes = await Cake.find({
-      "reviews.user": session.user.id,
+      "reviews.userId": session.user.id,
     }).select("name images reviews");
 
     const reviews = cakes.flatMap((cake) =>
       (cake.reviews || [])
-        .filter((r: { user: { toString: () => string } }) => r.user.toString() === session.user!.id)
+        .filter((r: { userId: { toString: () => string } }) => r.userId.toString() === session.user!.id)
         .map((r: { _id: unknown; rating: number; comment: string; createdAt: Date }) => ({
           _id: r._id,
           rating: r.rating,
@@ -102,8 +104,22 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Check if user has purchased this cake (delivered orders only)
+    const hasPurchased = await Order.findOne({
+      userId: session.user.id,
+      "items.cakeId": cakeId,
+      orderStatus: "delivered",
+    });
+
+    if (!hasPurchased) {
+      return NextResponse.json(
+        { success: false, message: "You can only review cakes you have purchased" },
+        { status: 403 }
+      );
+    }
+
     const existingReview = (cake.reviews || []).find(
-      (r: { user: { toString: () => string } }) => r.user.toString() === session.user!.id
+      (r: { userId: { toString: () => string } }) => r.userId.toString() === session.user!.id
     );
 
     if (existingReview) {
@@ -113,8 +129,12 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Get username
+    const user = await User.findById(session.user.id).select("name");
+
     cake.reviews.push({
-      user: session.user.id,
+      userId: session.user.id,
+      username: user?.name || session.user.name || "Customer",
       rating,
       comment: comment || "",
     });
@@ -177,7 +197,7 @@ export async function PUT(request: NextRequest) {
     }
 
     const review = cake.reviews.id(reviewId);
-    if (!review || review.user.toString() !== session.user.id) {
+    if (!review || review.userId.toString() !== session.user.id) {
       return NextResponse.json(
         { success: false, message: "Review not found" },
         { status: 404 }
@@ -234,7 +254,7 @@ export async function DELETE(request: NextRequest) {
     }
 
     const review = cake.reviews.id(reviewId);
-    if (!review || review.user.toString() !== session.user.id) {
+    if (!review || review.userId.toString() !== session.user.id) {
       return NextResponse.json(
         { success: false, message: "Review not found" },
         { status: 404 }

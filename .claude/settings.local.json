@@ -4,7 +4,11 @@
       "Bash(cd:*)",
       "Bash(find:*)",
       "Bash(ls:*)",
-      "Bash(taskkill:*)"
+      "Bash(taskkill:*)",
+      "Bash(xargs grep:*)",
+      "Bash(xargs cat:*)",
+      "Bash(find \"D:/Sample/Cakes/cake-shop/app/\\(admin\\)\" -type f)",
+      "Bash(npm install:*)"
     ]
   }
 }

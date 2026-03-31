@@ -78,7 +78,7 @@ export async function PUT(
     const page = await CustomPage.findByIdAndUpdate(
       id,
       validation.data,
-      { new: true, runValidators: true }
+      { returnDocument: "after", runValidators: true }
     );
 
     if (!page) {

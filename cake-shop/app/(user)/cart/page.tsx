@@ -13,21 +13,21 @@ import { formatPrice } from "@/lib/utils";
 
 interface CartItem {
   _id: string;
-  cake: {
-    _id: string;
-    name: string;
-    slug: string;
-    images: { url: string; alt: string }[];
+  cakeId: string;
+  name: string;
+  image: string;
+  priceOption: {
+    weight: number;
+    sellPrice: number;
   };
-  weight: number;
-  price: number;
   quantity: number;
   cakeMessage?: string;
-  addons: { name: string; price: number }[];
+  addons: { addonId: string; name: string; price: number; quantity: number }[];
 }
 
 interface Cart {
   items: CartItem[];
+  totalAmount: number;
 }
 
 export default function CartPage() {
@@ -40,7 +40,7 @@ export default function CartPage() {
       const res = await fetch("/api/user/cart");
       if (!res.ok) throw new Error("Failed to fetch cart");
       const data = await res.json();
-      setCart(data);
+      setCart(data.cart || { items: [], totalAmount: 0 });
     } catch {
       toast.error("Failed to load cart");
     } finally {
@@ -52,18 +52,18 @@ export default function CartPage() {
     fetchCart();
   }, [fetchCart]);
 
-  const updateQuantity = async (itemId: string, quantity: number) => {
+  const updateQuantity = async (itemIndex: number, quantity: number) => {
     if (quantity < 1) return;
-    setUpdating(itemId);
+    setUpdating(String(itemIndex));
     try {
       const res = await fetch("/api/user/cart", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ itemId, quantity }),
+        body: JSON.stringify({ itemIndex, quantity }),
       });
       if (!res.ok) throw new Error("Failed to update");
       const data = await res.json();
-      setCart(data);
+      setCart(data.cart || { items: [], totalAmount: 0 });
       toast.success("Cart updated");
     } catch {
       toast.error("Failed to update quantity");
@@ -72,17 +72,17 @@ export default function CartPage() {
     }
   };
 
-  const removeItem = async (itemId: string) => {
-    setUpdating(itemId);
+  const removeItem = async (itemIndex: number) => {
+    setUpdating(String(itemIndex));
     try {
       const res = await fetch("/api/user/cart", {
         method: "DELETE",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ itemId }),
+        body: JSON.stringify({ itemIndex }),
       });
       if (!res.ok) throw new Error("Failed to remove");
       const data = await res.json();
-      setCart(data);
+      setCart(data.cart || { items: [], totalAmount: 0 });
       toast.success("Item removed from cart");
     } catch {
       toast.error("Failed to remove item");
@@ -92,8 +92,8 @@ export default function CartPage() {
   };
 
   const getItemSubtotal = (item: CartItem) => {
-    const addonsTotal = item.addons.reduce((sum, a) => sum + a.price, 0);
-    return (item.price + addonsTotal) * item.quantity;
+    const addonsTotal = (item.addons || []).reduce((sum, a) => sum + a.price * a.quantity, 0);
+    return item.priceOption.sellPrice * item.quantity + addonsTotal;
   };
 
   const getTotal = () => {
@@ -131,7 +131,7 @@ export default function CartPage() {
         <p className="text-muted-foreground mb-6">
           Looks like you haven&apos;t added any cakes yet.
         </p>
-        <Button render={<Link href="/" />}>Browse Cakes</Button>
+        <Button nativeButton={false} render={<Link href="/" />}>Browse Cakes</Button>
       </div>
     );
   }
@@ -145,15 +145,15 @@ export default function CartPage() {
       <div className="grid gap-6 lg:grid-cols-3">
         {/* Cart Items */}
         <div className="lg:col-span-2 space-y-4">
-          {cart.items.map((item) => (
-            <Card key={item._id}>
+          {cart.items.map((item, index) => (
+            <Card key={item._id || index}>
               <CardContent className="flex gap-4">
                 {/* Image */}
                 <div className="relative h-24 w-24 shrink-0 overflow-hidden rounded-lg bg-muted">
-                  {item.cake.images[0] ? (
+                  {item.image ? (
                     <Image
-                      src={item.cake.images[0].url}
-                      alt={item.cake.images[0].alt || item.cake.name}
+                      src={item.image}
+                      alt={item.name}
                       fill
                       className="object-cover"
                       sizes="96px"
@@ -167,12 +167,12 @@ export default function CartPage() {
 
                 {/* Details */}
                 <div className="flex-1 min-w-0">
-                  <h3 className="font-semibold line-clamp-1">{item.cake.name}</h3>
+                  <h3 className="font-semibold line-clamp-1">{item.name}</h3>
                   <p className="text-sm text-muted-foreground">
-                    Weight: {item.weight} kg
+                    Weight: {item.priceOption.weight} kg
                   </p>
                   <p className="text-sm font-medium">
-                    {formatPrice(item.price)}
+                    {formatPrice(item.priceOption.sellPrice)}
                   </p>
 
                   {item.cakeMessage && (
@@ -181,7 +181,7 @@ export default function CartPage() {
                     </p>
                   )}
 
-                  {item.addons.length > 0 && (
+                  {item.addons?.length > 0 && (
                     <div className="mt-1 flex flex-wrap gap-1">
                       {item.addons.map((addon, i) => (
                         <Badge key={i} variant="secondary">
@@ -197,9 +197,9 @@ export default function CartPage() {
                       <Button
                         variant="outline"
                         size="icon-sm"
-                        disabled={updating === item._id || item.quantity <= 1}
+                        disabled={updating === String(index) || item.quantity <= 1}
                         onClick={() =>
-                          updateQuantity(item._id, item.quantity - 1)
+                          updateQuantity(index, item.quantity - 1)
                         }
                       >
                         <Minus className="h-3 w-3" />
@@ -210,9 +210,9 @@ export default function CartPage() {
                       <Button
                         variant="outline"
                         size="icon-sm"
-                        disabled={updating === item._id}
+                        disabled={updating === String(index)}
                         onClick={() =>
-                          updateQuantity(item._id, item.quantity + 1)
+                          updateQuantity(index, item.quantity + 1)
                         }
                       >
                         <Plus className="h-3 w-3" />
@@ -220,8 +220,8 @@ export default function CartPage() {
                       <Button
                         variant="destructive"
                         size="icon-sm"
-                        disabled={updating === item._id}
-                        onClick={() => removeItem(item._id)}
+                        disabled={updating === String(index)}
+                        onClick={() => removeItem(index)}
                       >
                         <Trash2 className="h-3 w-3" />
                       </Button>
@@ -270,6 +270,7 @@ export default function CartPage() {
               <Button
                 className="w-full mt-2"
                 size="lg"
+                nativeButton={false}
                 render={<Link href="/checkout" />}
               >
                 Checkout

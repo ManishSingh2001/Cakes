@@ -1,6 +1,10 @@
 import Razorpay from "razorpay";
 
-export const razorpay = new Razorpay({
-  key_id: process.env.RAZORPAY_KEY_ID!,
-  key_secret: process.env.RAZORPAY_KEY_SECRET!,
-});
+export function createRazorpayClient(keyId?: string, keySecret?: string) {
+  return new Razorpay({
+    key_id: keyId || process.env.RAZORPAY_KEY_ID!,
+    key_secret: keySecret || process.env.RAZORPAY_KEY_SECRET!,
+  });
+}
+
+export const razorpay = createRazorpayClient();

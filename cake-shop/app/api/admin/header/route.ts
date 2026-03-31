@@ -63,7 +63,7 @@ export async function PUT(request: NextRequest) {
     const header = await Header.findOneAndUpdate(
       {},
       validation.data,
-      { new: true, upsert: true, runValidators: true }
+      { returnDocument: "after", upsert: true, runValidators: true }
     );
 
     return NextResponse.json({ success: true, data: header });

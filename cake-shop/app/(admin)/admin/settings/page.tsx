@@ -31,6 +31,12 @@ interface SettingsForm {
     isEnabled: boolean;
     message: string;
   };
+  paymentGateways: {
+    razorpay: { enabled: boolean; displayName: string; keyId: string; keySecret: string };
+    stripe: { enabled: boolean; displayName: string; publishableKey: string; secretKey: string };
+    cod: { enabled: boolean; displayName: string; instructions: string };
+    bankTransfer: { enabled: boolean; displayName: string; instructions: string; accountDetails: string };
+  };
 }
 
 export default function SettingsPage() {
@@ -58,6 +64,12 @@ export default function SettingsPage() {
           isEnabled: false,
           message: "We'll be back soon!",
         },
+        paymentGateways: {
+          razorpay: { enabled: true, displayName: "Razorpay", keyId: "", keySecret: "" },
+          stripe: { enabled: false, displayName: "Stripe", publishableKey: "", secretKey: "" },
+          cod: { enabled: false, displayName: "Cash on Delivery", instructions: "Pay when your order is delivered." },
+          bankTransfer: { enabled: false, displayName: "Bank Transfer", instructions: "Transfer the amount to our bank account.", accountDetails: "" },
+        },
       },
     });
 
@@ -78,7 +90,9 @@ export default function SettingsPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(data),
       });
+      const result = await res.json();
       if (!res.ok) throw new Error();
+      if (result.data) reset(result.data);
       toast.success("Settings saved");
     } catch {
       toast.error("Failed to save settings");
@@ -167,11 +181,13 @@ export default function SettingsPage() {
                 <div className="flex items-center gap-2">
                   <Input
                     type="color"
-                    {...register("theme.primaryColor")}
+                    value={watch("theme.primaryColor")}
+                    onChange={(e) => setValue("theme.primaryColor", e.target.value)}
                     className="h-10 w-14 cursor-pointer p-1"
                   />
                   <Input
-                    {...register("theme.primaryColor")}
+                    value={watch("theme.primaryColor")}
+                    onChange={(e) => setValue("theme.primaryColor", e.target.value)}
                     className="flex-1"
                   />
                 </div>
@@ -181,11 +197,13 @@ export default function SettingsPage() {
                 <div className="flex items-center gap-2">
                   <Input
                     type="color"
-                    {...register("theme.secondaryColor")}
+                    value={watch("theme.secondaryColor")}
+                    onChange={(e) => setValue("theme.secondaryColor", e.target.value)}
                     className="h-10 w-14 cursor-pointer p-1"
                   />
                   <Input
-                    {...register("theme.secondaryColor")}
+                    value={watch("theme.secondaryColor")}
+                    onChange={(e) => setValue("theme.secondaryColor", e.target.value)}
                     className="flex-1"
                   />
                 </div>
@@ -195,11 +213,13 @@ export default function SettingsPage() {
                 <div className="flex items-center gap-2">
                   <Input
                     type="color"
-                    {...register("theme.accentColor")}
+                    value={watch("theme.accentColor")}
+                    onChange={(e) => setValue("theme.accentColor", e.target.value)}
                     className="h-10 w-14 cursor-pointer p-1"
                   />
                   <Input
-                    {...register("theme.accentColor")}
+                    value={watch("theme.accentColor")}
+                    onChange={(e) => setValue("theme.accentColor", e.target.value)}
                     className="flex-1"
                   />
                 </div>
@@ -241,6 +261,140 @@ export default function SettingsPage() {
             <div>
               <Label>Maintenance Message</Label>
               <Textarea {...register("maintenance.message")} rows={2} />
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Payment Gateways */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Payment Gateways</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            {/* Razorpay */}
+            <div className="rounded-lg border p-4 space-y-3">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="font-medium">Razorpay</p>
+                  <p className="text-sm text-muted-foreground">Accept online payments via Razorpay</p>
+                </div>
+                <Switch
+                  checked={watch("paymentGateways.razorpay.enabled")}
+                  onCheckedChange={(c) => setValue("paymentGateways.razorpay.enabled", !!c)}
+                />
+              </div>
+              {watch("paymentGateways.razorpay.enabled") && (
+                <div className="space-y-3 pt-2 border-t">
+                  <div>
+                    <Label>Display Name</Label>
+                    <Input {...register("paymentGateways.razorpay.displayName")} />
+                  </div>
+                  <div className="grid gap-3 sm:grid-cols-2">
+                    <div>
+                      <Label>Key ID</Label>
+                      <Input {...register("paymentGateways.razorpay.keyId")} placeholder="rzp_test_..." />
+                    </div>
+                    <div>
+                      <Label>Key Secret</Label>
+                      <Input type="password" {...register("paymentGateways.razorpay.keySecret")} placeholder="Enter key secret" />
+                    </div>
+                  </div>
+                  <p className="text-xs text-muted-foreground">Leave blank to use environment variables.</p>
+                </div>
+              )}
+            </div>
+
+            {/* Stripe */}
+            <div className="rounded-lg border p-4 space-y-3">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="font-medium">Stripe</p>
+                  <p className="text-sm text-muted-foreground">Accept payments via Stripe</p>
+                </div>
+                <Switch
+                  checked={watch("paymentGateways.stripe.enabled")}
+                  onCheckedChange={(c) => setValue("paymentGateways.stripe.enabled", !!c)}
+                />
+              </div>
+              {watch("paymentGateways.stripe.enabled") && (
+                <div className="space-y-3 pt-2 border-t">
+                  <div>
+                    <Label>Display Name</Label>
+                    <Input {...register("paymentGateways.stripe.displayName")} />
+                  </div>
+                  <div className="grid gap-3 sm:grid-cols-2">
+                    <div>
+                      <Label>Publishable Key</Label>
+                      <Input {...register("paymentGateways.stripe.publishableKey")} placeholder="pk_test_..." />
+                    </div>
+                    <div>
+                      <Label>Secret Key</Label>
+                      <Input type="password" {...register("paymentGateways.stripe.secretKey")} placeholder="sk_test_..." />
+                    </div>
+                  </div>
+                  <p className="text-xs text-muted-foreground">Leave blank to use environment variables.</p>
+                </div>
+              )}
+            </div>
+
+            {/* COD */}
+            <div className="rounded-lg border p-4 space-y-3">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="font-medium">Cash on Delivery</p>
+                  <p className="text-sm text-muted-foreground">Allow payment at delivery time</p>
+                </div>
+                <Switch
+                  checked={watch("paymentGateways.cod.enabled")}
+                  onCheckedChange={(c) => setValue("paymentGateways.cod.enabled", !!c)}
+                />
+              </div>
+              {watch("paymentGateways.cod.enabled") && (
+                <div className="space-y-3 pt-2 border-t">
+                  <div>
+                    <Label>Display Name</Label>
+                    <Input {...register("paymentGateways.cod.displayName")} />
+                  </div>
+                  <div>
+                    <Label>Instructions</Label>
+                    <Textarea {...register("paymentGateways.cod.instructions")} rows={2} />
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Bank Transfer */}
+            <div className="rounded-lg border p-4 space-y-3">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="font-medium">Bank Transfer</p>
+                  <p className="text-sm text-muted-foreground">Accept direct bank transfers</p>
+                </div>
+                <Switch
+                  checked={watch("paymentGateways.bankTransfer.enabled")}
+                  onCheckedChange={(c) => setValue("paymentGateways.bankTransfer.enabled", !!c)}
+                />
+              </div>
+              {watch("paymentGateways.bankTransfer.enabled") && (
+                <div className="space-y-3 pt-2 border-t">
+                  <div>
+                    <Label>Display Name</Label>
+                    <Input {...register("paymentGateways.bankTransfer.displayName")} />
+                  </div>
+                  <div>
+                    <Label>Instructions</Label>
+                    <Textarea {...register("paymentGateways.bankTransfer.instructions")} rows={2} />
+                  </div>
+                  <div>
+                    <Label>Account Details</Label>
+                    <Textarea
+                      {...register("paymentGateways.bankTransfer.accountDetails")}
+                      rows={3}
+                      placeholder={"Bank: State Bank of India\nAccount: 1234567890\nIFSC: SBIN0001234\nName: Sweet Delights Bakery"}
+                    />
+                  </div>
+                </div>
+              )}
             </div>
           </CardContent>
         </Card>

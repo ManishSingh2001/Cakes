@@ -7,6 +7,7 @@ import { HeroSection } from "@/components/public/HeroSection";
 import { CakeCard } from "@/components/public/CakeCard";
 import { LatestUpdates } from "@/components/public/LatestUpdates";
 import { VisitSection } from "@/components/public/VisitSection";
+import { ReviewsCarousel } from "@/components/public/ReviewsCarousel";
 import { AnimatedSection } from "@/components/public/AnimatedSection";
 
 async function getHomeData() {
@@ -17,16 +18,50 @@ async function getHomeData() {
     Update.find({ isPublished: true }).sort({ publishedAt: -1 }).limit(3).lean(),
     Visit.findOne().lean(),
   ]);
+
+  // Get recent reviews with comments (from all cakes)
+  const cakesWithReviews = await Cake.find(
+    { "reviews.comment": { $ne: "" }, isAvailable: true },
+    { name: 1, reviews: 1 }
+  ).lean();
+
+  const allReviews: {
+    _id: string;
+    username: string;
+    rating: number;
+    comment: string;
+    cakeName: string;
+  }[] = [];
+
+  for (const c of cakesWithReviews) {
+    for (const r of c.reviews || []) {
+      if (r.comment && r.comment.trim().length > 10) {
+        allReviews.push({
+          _id: String(r._id),
+          username: r.username,
+          rating: r.rating,
+          comment: r.comment,
+          cakeName: c.name,
+        });
+      }
+    }
+  }
+
+  // Sort by most recent and take top 12
+  allReviews.sort((a, b) => (b._id > a._id ? 1 : -1));
+  const topReviews = allReviews.slice(0, 12);
+
   return {
     hero: hero ? JSON.parse(JSON.stringify(hero)) : null,
     cakes: JSON.parse(JSON.stringify(cakes)),
     updates: JSON.parse(JSON.stringify(updates)),
     visit: visit ? JSON.parse(JSON.stringify(visit)) : null,
+    reviews: topReviews,
   };
 }
 
 export default async function HomePage() {
-  const { hero, cakes, updates, visit } = await getHomeData();
+  const { hero, cakes, updates, visit, reviews } = await getHomeData();
 
   return (
     <>
@@ -57,6 +92,9 @@ export default async function HomePage() {
           </div>
         </section>
       )}
+
+      {/* Customer Reviews Carousel */}
+      {reviews.length > 0 && <ReviewsCarousel reviews={reviews} />}
 
       {/* Latest Updates */}
       <LatestUpdates updates={updates} />

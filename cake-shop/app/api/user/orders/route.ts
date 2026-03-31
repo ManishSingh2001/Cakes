@@ -15,9 +15,9 @@ export async function GET() {
 
     await connectDB();
 
-    const orders = await Order.find({ user: session.user.id })
-      .populate("items.cake", "name images")
-      .sort({ createdAt: -1 });
+    const orders = await Order.find({ userId: session.user.id })
+      .sort({ createdAt: -1 })
+      .lean();
 
     return NextResponse.json({ success: true, orders });
   } catch (error) {

@@ -4,7 +4,7 @@ import { connectDB } from "@/lib/db";
 import { Cake } from "@/lib/models/Cake";
 import { cakeSchema } from "@/lib/validations/cake.schema";
 
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
     const session = await auth();
     if (!session) {
@@ -20,10 +20,40 @@ export async function GET() {
       );
     }
 
-    await connectDB();
-    const cakes = await Cake.find().sort({ order: 1, createdAt: 1 });
+    const { searchParams } = new URL(request.url);
+    const cursor = searchParams.get("cursor");
+    const search = searchParams.get("search") || "";
+    const limit = Math.min(parseInt(searchParams.get("limit") || "20", 10), 100);
 
-    return NextResponse.json({ success: true, data: cakes });
+    await connectDB();
+
+    const filter: Record<string, unknown> = {};
+    if (search) {
+      filter.$or = [
+        { name: { $regex: search, $options: "i" } },
+        { category: { $regex: search, $options: "i" } },
+      ];
+    }
+    if (cursor) {
+      filter._id = { $gt: cursor };
+    }
+
+    const cakes = await Cake.find(filter)
+      .sort({ _id: 1 })
+      .limit(limit + 1)
+      .lean();
+
+    const hasMore = cakes.length > limit;
+    if (hasMore) cakes.pop();
+
+    const nextCursor = cakes.length > 0 ? cakes[cakes.length - 1]._id : null;
+    const total = !cursor ? await Cake.countDocuments(search ? filter : {}) : undefined;
+
+    return NextResponse.json({
+      success: true,
+      data: JSON.parse(JSON.stringify(cakes)),
+      pagination: { nextCursor, hasMore, ...(total !== undefined && { total }) },
+    });
   } catch (error) {
     console.error("Admin cakes GET error:", error);
     return NextResponse.json(
@@ -111,7 +141,7 @@ export async function PUT(request: NextRequest) {
     const cake = await Cake.findByIdAndUpdate(
       _id,
       validation.data,
-      { new: true, runValidators: true }
+      { returnDocument: "after", runValidators: true }
     );
 
     if (!cake) {
