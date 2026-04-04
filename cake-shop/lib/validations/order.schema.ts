@@ -15,7 +15,7 @@ export const checkoutSchema = z.object({
   deliveryDate: z.string().min(1, "Delivery date is required"),
   deliverySlot: z.enum(["10AM-12PM", "12PM-3PM", "3PM-6PM", "6PM-9PM"]),
   specialInstructions: z.string(),
-  paymentMethod: z.enum(["razorpay", "stripe", "cod", "bank_transfer"]).default("razorpay"),
+  paymentMethod: z.enum(["razorpay", "stripe", "cod", "bank_transfer"]),
 });
 
 export const orderStatusUpdateSchema = z.object({
