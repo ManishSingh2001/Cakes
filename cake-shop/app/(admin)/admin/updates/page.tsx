@@ -40,7 +40,6 @@ interface UpdateRow {
   category: string;
   isPublished: boolean;
   createdAt: string;
-  tags: string[];
 }
 
 export default function UpdatesPage() {

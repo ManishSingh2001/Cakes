@@ -57,8 +57,8 @@ interface CakeRow {
   name: string;
   slug: string;
   description: string;
-  caketype: "cake" | "pastries";
-  type: "egg" | "eggless";
+  caketype: string;
+  type: string;
   category: string;
   images: { url: string; alt: string }[];
   isFeatured: boolean;
