@@ -112,31 +112,7 @@ export const siteSettingsSchema = z.object({
       instructions: z.string().default("Transfer the amount to our bank account."),
       accountDetails: z.string().default(""),
     }),
-  }).default({
-    razorpay: {
-      enabled: true,
-      displayName: "Razorpay",
-      keyId: "",
-      keySecret: "",
-    },
-    stripe: {
-      enabled: false,
-      displayName: "Stripe",
-      publishableKey: "",
-      secretKey: "",
-    },
-    cod: {
-      enabled: false,
-      displayName: "Cash on Delivery",
-      instructions: "Pay when your order is delivered.",
-    },
-    bankTransfer: {
-      enabled: false,
-      displayName: "Bank Transfer",
-      instructions: "Transfer the amount to our bank account.",
-      accountDetails: "",
-    },
-  }),
+  }).default({}),
 });
 
 export type AboutInput = z.infer<typeof aboutSchema>;
