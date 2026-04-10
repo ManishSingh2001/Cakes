@@ -30,5 +30,5 @@ export const orderStatusUpdateSchema = z.object({
   note: z.string().default(""),
 });
 
-export type CheckoutInput = z.infer<typeof checkoutSchema>;
+export type CheckoutInput = z.input<typeof checkoutSchema>;
 export type OrderStatusUpdateInput = z.infer<typeof orderStatusUpdateSchema>;
