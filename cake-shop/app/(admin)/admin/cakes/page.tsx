@@ -167,6 +167,9 @@ export default function CakesPage() {
     setEditing(id);
     reset({
       ...cake,
+      caketype: cake.caketype as CakeForm["caketype"],
+      type: cake.type as CakeForm["type"],
+      category: cake.category as CakeForm["category"],
       tags: cake.tags?.join(", ") || "",
     });
     setDialogOpen(true);

@@ -1,0 +1,68 @@
+ Repository Analysis: Sweet Delights Bakery (Cakes)
+
+  What It Is
+
+  A full-stack e-commerce cake shop built with Next.js 16 + React 19 + TypeScript + MongoDB (Mongoose). Features product
+   browsing, cake customization, cart/checkout, multiple payment gateways, and an admin panel.
+
+  ---
+  Tech Stack
+
+  ┌──────────┬────────────────────────────────────────────────────────────────┐
+  │  Layer   │                              Tech                              │
+  ├──────────┼────────────────────────────────────────────────────────────────┤
+  │ Frontend │ Next.js 16, React 19, Tailwind CSS 4, shadcn/ui, Framer Motion │
+  ├──────────┼────────────────────────────────────────────────────────────────┤
+  │ Backend  │ Next.js API Routes + Server Actions                            │
+  ├──────────┼────────────────────────────────────────────────────────────────┤
+  │ Database │ MongoDB / Mongoose 9                                           │
+  ├──────────┼────────────────────────────────────────────────────────────────┤
+  │ Auth     │ NextAuth 5 (beta) — JWT + Credentials                          │
+  ├──────────┼────────────────────────────────────────────────────────────────┤
+  │ Payments │ Razorpay + Stripe                                              │
+  ├──────────┼────────────────────────────────────────────────────────────────┤
+  │ Uploads  │ UploadThing / Cloudinary                                       │
+  ├──────────┼────────────────────────────────────────────────────────────────┤
+  │ Email    │ Nodemailer                                                     │
+  └──────────┴────────────────────────────────────────────────────────────────┘
+
+  Architecture
+
+  - 15 Mongoose models (User, Cake, Order, Cart, Addon, Hero, etc.)
+  - 31 API routes split into /api/admin, /api/public, /api/user
+  - 16 server actions for data mutations
+  - Role-based access (user / admin / superadmin) via proxy middleware
+  - App Router with route groups: (admin), (auth), (public)
+
+  ---
+  Critical Issues
+
+  1. .env.local may contain real credentials — MongoDB URI, SMTP password, UploadThing token. Verify it's not tracked in
+   git and rotate credentials if it ever was.
+  2. Weak NEXTAUTH_SECRET — still set to placeholder super-secret-key-change-in-production.
+  3. NextAuth beta — 5.0.0-beta.30 is not production-stable; upgrade when a stable v5 is available.
+  4. No rate limiting on API routes — authentication and payment endpoints are vulnerable to brute force.
+  5. No input sanitization — TipTap rich text and custom pages could expose XSS if rendered unsafely.
+
+  Other Issues to Address
+
+  - No CI/CD pipeline or Dockerfiles
+  - No automated tests
+  - Generic README (no setup/deploy docs)
+  - Missing password reset flow (OTP model exists but no visible recovery endpoints)
+  - No caching strategy (no Redis, no ISR/revalidation documented)
+  - Order IDs use simple timestamp+random — not cryptographically strong
+
+  Strengths
+
+  - Clean, modern stack with good separation of concerns
+  - Comprehensive feature set (catalog, customization, multi-payment, admin CMS)
+  - Proper use of Zod validation schemas
+  - Server actions for mutations with auth checks
+  - Architecture docs in specs/ directory
+
+  ---
+  Want me to dive deeper into any specific area — security hardening, a particular feature, or fixing any of these
+  issues?
+
+✻ Crunched for 1m 59s

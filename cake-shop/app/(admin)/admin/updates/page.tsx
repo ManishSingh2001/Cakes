@@ -38,6 +38,7 @@ interface UpdateRow {
   title: string;
   slug: string;
   category: string;
+  tags: string[];
   isPublished: boolean;
   createdAt: string;
 }

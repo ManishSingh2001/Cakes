@@ -94,25 +94,30 @@ export const siteSettingsSchema = z.object({
       displayName: z.string().default("Razorpay"),
       keyId: z.string().default(""),
       keySecret: z.string().default(""),
-    }),
+    }).default({ enabled: true, displayName: "Razorpay", keyId: "", keySecret: "" }),
     stripe: z.object({
       enabled: z.boolean().default(false),
       displayName: z.string().default("Stripe"),
       publishableKey: z.string().default(""),
       secretKey: z.string().default(""),
-    }),
+    }).default({ enabled: false, displayName: "Stripe", publishableKey: "", secretKey: "" }),
     cod: z.object({
       enabled: z.boolean().default(false),
       displayName: z.string().default("Cash on Delivery"),
       instructions: z.string().default("Pay when your order is delivered."),
-    }),
+    }).default({ enabled: false, displayName: "Cash on Delivery", instructions: "Pay when your order is delivered." }),
     bankTransfer: z.object({
       enabled: z.boolean().default(false),
       displayName: z.string().default("Bank Transfer"),
       instructions: z.string().default("Transfer the amount to our bank account."),
       accountDetails: z.string().default(""),
-    }),
-  }).default({}),
+    }).default({ enabled: false, displayName: "Bank Transfer", instructions: "Transfer the amount to our bank account.", accountDetails: "" }),
+  }).default({
+    razorpay: { enabled: true, displayName: "Razorpay", keyId: "", keySecret: "" },
+    stripe: { enabled: false, displayName: "Stripe", publishableKey: "", secretKey: "" },
+    cod: { enabled: false, displayName: "Cash on Delivery", instructions: "Pay when your order is delivered." },
+    bankTransfer: { enabled: false, displayName: "Bank Transfer", instructions: "Transfer the amount to our bank account.", accountDetails: "" },
+  }),
 });
 
 export type AboutInput = z.infer<typeof aboutSchema>;

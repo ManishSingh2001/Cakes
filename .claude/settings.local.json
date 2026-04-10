@@ -8,7 +8,8 @@
       "Bash(xargs grep:*)",
       "Bash(xargs cat:*)",
       "Bash(find \"D:/Sample/Cakes/cake-shop/app/\\(admin\\)\" -type f)",
-      "Bash(npm install:*)"
+      "Bash(npm install:*)",
+      "Bash(wc:*)"
     ]
   }
 }
