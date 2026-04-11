@@ -32,7 +32,7 @@ export function Footer({ data }: FooterProps) {
                 alt={data.logo.altText || "Sweet Delights"}
                 width={160}
                 height={48}
-                className="h-10 w-auto brightness-0 invert"
+                className="h-10 w-auto"
               />
             ) : (
               <span className="font-heading text-2xl font-bold text-cake-gold">
