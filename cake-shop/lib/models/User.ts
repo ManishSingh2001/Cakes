@@ -15,6 +15,18 @@ export interface IUser {
     zipCode?: string;
     country?: string;
   };
+  addresses: {
+    _id?: string;
+    label: string;
+    fullName: string;
+    phone: string;
+    street: string;
+    city: string;
+    state: string;
+    zipCode: string;
+    landmark: string;
+    isDefault: boolean;
+  }[];
   wishlist: mongoose.Types.ObjectId[];
   isActive: boolean;
   lastLogin?: Date;
@@ -37,6 +49,19 @@ const userSchema = new Schema<IUser>(
       zipCode: String,
       country: { type: String, default: "India" },
     },
+    addresses: [
+      {
+        label: { type: String, default: "Home" },
+        fullName: { type: String, required: true },
+        phone: { type: String, required: true },
+        street: { type: String, required: true },
+        city: { type: String, required: true },
+        state: { type: String, required: true },
+        zipCode: { type: String, required: true },
+        landmark: { type: String, default: "" },
+        isDefault: { type: Boolean, default: false },
+      },
+    ],
     wishlist: [{ type: Schema.Types.ObjectId, ref: "Cake" }],
     isActive: { type: Boolean, default: true },
     lastLogin: { type: Date },
