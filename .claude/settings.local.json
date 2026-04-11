@@ -9,7 +9,9 @@
       "Bash(xargs cat:*)",
       "Bash(find \"D:/Sample/Cakes/cake-shop/app/\\(admin\\)\" -type f)",
       "Bash(npm install:*)",
-      "Bash(wc:*)"
+      "Bash(wc:*)",
+      "Bash(mkdir -p \"D:/ManishSingh2001/Cakes/cake-shop/app/api/public/updates/[slug]\")",
+      "Bash(mkdir -p \"D:/ManishSingh2001/Cakes/cake-shop/app/\\(public\\)/updates/[slug]\")"
     ]
   }
 }

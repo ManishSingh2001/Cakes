@@ -12,6 +12,8 @@ export interface IHeader {
     imageUrl: string;
     altText: string;
     linkTo: string;
+    width: number;
+    height: number;
   };
   navigation: INavLink[];
   ctaButton: {
@@ -29,6 +31,8 @@ const headerSchema = new Schema<IHeader>(
       imageUrl: { type: String, default: "" },
       altText: { type: String, default: "Sweet Delights Bakery" },
       linkTo: { type: String, default: "/" },
+      width: { type: Number, default: 60 },
+      height: { type: Number, default: 60 },
     },
     navigation: [
       {

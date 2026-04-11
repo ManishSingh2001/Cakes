@@ -12,6 +12,8 @@ export const headerSchema = z.object({
     imageUrl: z.string().default(""),
     altText: z.string().default("Sweet Delights Bakery"),
     linkTo: z.string().default("/"),
+    width: z.preprocess((v) => (typeof v === "number" && !isNaN(v) ? v : 60), z.number().min(20).max(500)),
+    height: z.preprocess((v) => (typeof v === "number" && !isNaN(v) ? v : 60), z.number().min(10).max(200)),
   }),
   navigation: z.array(navLinkSchema),
   ctaButton: z.object({

@@ -3,12 +3,13 @@
 import Link from "next/link";
 import Image from "next/image";
 import { useState } from "react";
-import { Menu, X, ShoppingCart, User, Sun, Moon } from "lucide-react";
+import { Menu, X, ShoppingCart, User, Sun, Moon, LayoutDashboard } from "lucide-react";
 import { useTheme } from "next-themes";
 import { useSession } from "next-auth/react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { cn } from "@/lib/utils";
+import { useCart } from "@/hooks/useCart";
 import type { IHeader } from "@/lib/models/Header";
 
 interface HeaderProps {
@@ -19,6 +20,8 @@ export function Header({ data }: HeaderProps) {
   const [isOpen, setIsOpen] = useState(false);
   const { theme, setTheme } = useTheme();
   const { data: session } = useSession();
+  const isAdmin = session?.user?.role === "admin" || session?.user?.role === "superadmin";
+  const { itemCount } = useCart();
 
   const navigation = data?.navigation
     ?.filter((n) => n.isVisible)
@@ -50,9 +53,9 @@ export function Header({ data }: HeaderProps) {
             <Image
               src={data.logo.imageUrl}
               alt={data.logo.altText || "Sweet Delights"}
-              width={140}
-              height={40}
-              className="h-8 w-auto md:h-10"
+              width={data.logo.width || 60}
+              height={data.logo.height || 60}
+              style={{ width: data.logo.width || 60, height: data.logo.height || 60 }}
             />
           ) : (
             <span className="font-heading text-xl font-bold text-cake-brown md:text-2xl">
@@ -87,12 +90,23 @@ export function Header({ data }: HeaderProps) {
           {session ? (
             <Link href="/cart" className="relative rounded-full p-2 hover:bg-accent">
               <ShoppingCart className="h-5 w-5" />
+              {itemCount > 0 && (
+                <span className="absolute -right-0.5 -top-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-cake-gold px-1 text-[10px] font-bold text-white">
+                  {itemCount > 99 ? "99+" : itemCount}
+                </span>
+              )}
             </Link>
           ) : null}
 
           <Link href={session ? "/profile" : "/login"} className="rounded-full p-2 hover:bg-accent">
             <User className="h-5 w-5" />
           </Link>
+
+          {isAdmin && (
+            <Link href="/admin" className="rounded-full p-2 hover:bg-accent" title="Admin Dashboard">
+              <LayoutDashboard className="h-5 w-5" />
+            </Link>
+          )}
 
           {ctaButton.isVisible && (
             <Link href={ctaButton.href} className="hidden md:inline-flex">
@@ -117,6 +131,16 @@ export function Header({ data }: HeaderProps) {
                     {item.label}
                   </Link>
                 ))}
+                {isAdmin && (
+                  <Link
+                    href="/admin"
+                    onClick={() => setIsOpen(false)}
+                    className="flex items-center gap-2 text-lg font-medium transition-colors hover:text-cake-gold"
+                  >
+                    <LayoutDashboard className="h-5 w-5" />
+                    Admin Dashboard
+                  </Link>
+                )}
                 {ctaButton.isVisible && (
                   <Link href={ctaButton.href} onClick={() => setIsOpen(false)}>
                     <Button className="mt-4 w-full bg-cake-gold text-white hover:bg-cake-brown">

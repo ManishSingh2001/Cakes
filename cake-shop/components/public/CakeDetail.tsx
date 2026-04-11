@@ -74,8 +74,10 @@ export function CakeDetail({ cake, addons }: CakeDetailProps) {
           })),
         }),
       });
-      if (res.ok) toast.success("Added to cart!");
-      else toast.error("Failed to add to cart");
+      if (res.ok) {
+        toast.success("Added to cart!");
+        window.dispatchEvent(new Event("cart-updated"));
+      } else toast.error("Failed to add to cart");
     } catch {
       toast.error("Something went wrong");
     }
