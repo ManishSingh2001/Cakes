@@ -182,7 +182,10 @@ export function CakeDetail({ cake, addons }: CakeDetailProps) {
             <Badge variant="secondary">{cake.caketype}</Badge>
           </div>
 
-          <h1 className="mt-3 font-heading text-3xl font-bold md:text-4xl">{cake.name}</h1>
+          {cake.sku && (
+            <p className="text-xs text-muted-foreground font-mono">SKU: {cake.sku}</p>
+          )}
+          <h1 className="mt-1 font-heading text-3xl font-bold md:text-4xl">{cake.name}</h1>
 
           {/* Rating */}
           {cake.totalReviews > 0 && (

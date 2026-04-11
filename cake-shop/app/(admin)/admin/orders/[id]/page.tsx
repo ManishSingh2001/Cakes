@@ -95,6 +95,9 @@ export default async function OrderDetailPage({
                     <TableCell>
                       <div>
                         <p className="font-medium">{item.name as string}</p>
+                        {Boolean(item.sku) && (
+                          <p className="text-xs text-muted-foreground font-mono">SKU: {item.sku as string}</p>
+                        )}
                         {Boolean(item.cakeMessage) && (
                           <p className="text-sm text-muted-foreground">
                             Message: {item.cakeMessage as string}

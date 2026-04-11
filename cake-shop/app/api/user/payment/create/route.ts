@@ -82,6 +82,7 @@ export async function POST(request: NextRequest) {
 
       return {
         cakeId: item.cakeId,
+        sku: item.sku || "",
         name: item.name,
         image: item.image || "",
         priceOption,

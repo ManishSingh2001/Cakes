@@ -43,6 +43,7 @@ interface UploadResult {
 }
 
 const CAKE_COLUMNS = [
+  "sku",
   "name",
   "description",
   "caketype",
@@ -72,6 +73,7 @@ const ADDON_COLUMNS = [
 
 const CAKE_SAMPLE = [
   {
+    sku: "CK-CHOC-001",
     name: "Chocolate Truffle",
     description: "Rich dark chocolate cake",
     caketype: "cake",
@@ -88,6 +90,7 @@ const CAKE_SAMPLE = [
     imageAlt: "",
   },
   {
+    sku: "",
     name: "Chocolate Truffle",
     description: "",
     caketype: "",
@@ -104,6 +107,7 @@ const CAKE_SAMPLE = [
     imageAlt: "",
   },
   {
+    sku: "CK-VAN-001",
     name: "Vanilla Dream",
     description: "Classic vanilla sponge",
     caketype: "cake",
@@ -271,6 +275,9 @@ export default function BulkUploadPage() {
             <div className="rounded-lg bg-muted/50 p-3 text-sm text-muted-foreground space-y-1">
               <p className="font-medium text-foreground">Cakes template guide:</p>
               <ul className="list-disc pl-5 space-y-0.5">
+                <li>
+                  <strong>sku:</strong> Unique product code (e.g. "CK-CHOC-001"). Only needed on the first row per product.
+                </li>
                 <li>
                   <strong>Multiple prices:</strong> Use multiple rows with the
                   same <code>name</code> — each row adds a price tier

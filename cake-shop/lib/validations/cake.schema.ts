@@ -7,6 +7,7 @@ export const priceOptionSchema = z.object({
 });
 
 export const cakeSchema = z.object({
+  sku: z.string().transform((v) => v.toUpperCase().trim()).default(""),
   name: z.string().min(1, "Name is required"),
   description: z.string().default(""),
   caketype: z.enum(["cake", "pastries"]),

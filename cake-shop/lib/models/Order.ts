@@ -9,6 +9,7 @@ export interface IOrderAddon {
 
 export interface IOrderItem {
   cakeId: mongoose.Types.ObjectId;
+  sku: string;
   name: string;
   image: string;
   caketype: string;
@@ -76,6 +77,7 @@ const orderSchema = new Schema<IOrder>(
     items: [
       {
         cakeId: { type: Schema.Types.ObjectId, ref: "Cake" },
+        sku: { type: String, default: "" },
         name: { type: String, required: true },
         image: { type: String, default: "" },
         caketype: { type: String },

@@ -14,6 +14,7 @@ import { formatPrice } from "@/lib/utils";
 interface CartItem {
   _id: string;
   cakeId: string;
+  sku: string;
   name: string;
   image: string;
   priceOption: {
@@ -169,7 +170,7 @@ export default function CartPage() {
                 <div className="flex-1 min-w-0">
                   <h3 className="font-semibold line-clamp-1">{item.name}</h3>
                   <p className="text-sm text-muted-foreground">
-                    Weight: {item.priceOption.weight} kg
+                    {item.sku && <><span className="font-mono">SKU: {item.sku}</span> &middot; </>}Weight: {item.priceOption.weight} kg
                   </p>
                   <p className="text-sm font-medium">
                     {formatPrice(item.priceOption.sellPrice)}

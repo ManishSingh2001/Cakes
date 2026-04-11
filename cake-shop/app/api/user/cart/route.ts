@@ -93,6 +93,7 @@ export async function POST(request: NextRequest) {
 
     const newItem: Record<string, unknown> = {
       cakeId,
+      sku: cake.sku || "",
       name: cake.name,
       image: cake.images?.[0]?.url || "",
       priceOption: {
