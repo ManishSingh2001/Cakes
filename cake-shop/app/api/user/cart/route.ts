@@ -93,6 +93,7 @@ export async function POST(request: NextRequest) {
 
     const newItem: Record<string, unknown> = {
       cakeId,
+      sku: cake.sku || "",
       name: cake.name,
       image: cake.images?.[0]?.url || "",
       priceOption: {
@@ -122,7 +123,20 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    cart.items.push(newItem);
+    // Check if same cake with same weight and message already exists
+    const existingIndex = cart.items.findIndex(
+      (item: { cakeId: { toString(): string }; priceOption: { weight: number }; cakeMessage?: string }) =>
+        item.cakeId.toString() === cakeId &&
+        item.priceOption.weight === priceOption.weight &&
+        (item.cakeMessage || "") === (cakeMessage || "")
+    );
+
+    if (existingIndex !== -1) {
+      cart.items[existingIndex].quantity += quantity;
+    } else {
+      cart.items.push(newItem);
+    }
+
     cart.totalAmount = calculateTotalAmount(cart.items);
     await cart.save();
 

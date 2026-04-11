@@ -23,6 +23,7 @@ import { formatPrice, formatDate } from "@/lib/utils";
 interface OrderItem {
   _id: string;
   cakeId: string;
+  sku: string;
   name: string;
   image: string;
   priceOption: { weight: number; sellPrice: number };
@@ -241,6 +242,7 @@ export default async function OrderDetailPage({
                   </div>
                   <div className="flex-1 min-w-0">
                     <h3 className="font-semibold">{item.name}</h3>
+                    {item.sku && <p className="text-xs text-muted-foreground font-mono">SKU: {item.sku}</p>}
                     <p className="text-sm text-muted-foreground">
                       {item.priceOption.weight} kg x {item.quantity} @ {formatPrice(item.priceOption.sellPrice)}
                     </p>

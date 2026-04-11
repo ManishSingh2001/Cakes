@@ -9,6 +9,7 @@ export interface ICartAddon {
 
 export interface ICartItem {
   cakeId: mongoose.Types.ObjectId;
+  sku: string;
   name: string;
   image: string;
   priceOption: {
@@ -33,6 +34,7 @@ const cartSchema = new Schema<ICart>(
     items: [
       {
         cakeId: { type: Schema.Types.ObjectId, ref: "Cake", required: true },
+        sku: { type: String, default: "" },
         name: { type: String, required: true },
         image: { type: String, default: "" },
         priceOption: {

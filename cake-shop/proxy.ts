@@ -16,9 +16,10 @@ export async function proxy(req: NextRequest) {
   const isLoginPage = pathname === "/login" || pathname === "/admin/login";
   const isRegisterPage = pathname === "/register";
   const isRegisterApi = pathname.startsWith("/api/user/register");
+  const isForgotPasswordApi = pathname.startsWith("/api/user/forgot-password");
 
-  // Allow login, register pages and register API
-  if (isLoginPage || isRegisterPage || isRegisterApi) return NextResponse.next();
+  // Allow login, register pages, register API, and forgot password API
+  if (isLoginPage || isRegisterPage || isRegisterApi || isForgotPasswordApi) return NextResponse.next();
 
   const token = await getToken({ req, secret: process.env.NEXTAUTH_SECRET });
 

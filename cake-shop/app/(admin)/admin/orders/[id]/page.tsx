@@ -1,6 +1,6 @@
 import { connectDB } from "@/lib/db";
 import { Order } from "@/lib/models/Order";
-import { formatPrice, formatDate } from "@/lib/utils";
+import { formatPrice, formatDate, formatDateTime } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
@@ -59,7 +59,7 @@ export default async function OrderDetailPage({
             Order {order.orderId}
           </h2>
           <p className="text-muted-foreground">
-            Placed on {formatDate(order.createdAt)}
+            Placed on {formatDateTime(order.createdAt)}
           </p>
         </div>
         <Badge
@@ -95,6 +95,9 @@ export default async function OrderDetailPage({
                     <TableCell>
                       <div>
                         <p className="font-medium">{item.name as string}</p>
+                        {Boolean(item.sku) && (
+                          <p className="text-xs text-muted-foreground font-mono">SKU: {item.sku as string}</p>
+                        )}
                         {Boolean(item.cakeMessage) && (
                           <p className="text-sm text-muted-foreground">
                             Message: {item.cakeMessage as string}
@@ -190,7 +193,7 @@ export default async function OrderDetailPage({
             {payment.paidAt && (
               <div className="flex items-center justify-between">
                 <span className="text-muted-foreground">Paid at</span>
-                <span>{formatDate(payment.paidAt)}</span>
+                <span>{formatDateTime(payment.paidAt)}</span>
               </div>
             )}
           </CardContent>
@@ -211,7 +214,7 @@ export default async function OrderDetailPage({
                   {(entry.status as string).replace(/_/g, " ")}
                 </p>
                 <p className="text-sm text-muted-foreground">
-                  {formatDate(entry.changedAt as string)}
+                  {formatDateTime(entry.changedAt as string)}
                 </p>
                 {Boolean(entry.note) && (
                   <p className="text-sm">{entry.note as string}</p>

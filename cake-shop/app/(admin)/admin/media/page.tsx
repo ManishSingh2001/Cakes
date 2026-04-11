@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useCallback, useRef } from "react";
 import { toast } from "sonner";
-import { Upload, Trash2, ImageIcon } from "lucide-react";
+import { Upload, Trash2, ImageIcon, Copy, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -97,6 +97,19 @@ export default function MediaPage() {
     }
   };
 
+  const [copiedId, setCopiedId] = useState<string | null>(null);
+
+  const copyUrl = async (id: string, url: string) => {
+    try {
+      await navigator.clipboard.writeText(url);
+      setCopiedId(id);
+      toast.success("URL copied to clipboard");
+      setTimeout(() => setCopiedId(null), 2000);
+    } catch {
+      toast.error("Failed to copy URL");
+    }
+  };
+
   const formatSize = (bytes: number) => {
     if (bytes < 1024) return `${bytes} B`;
     if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
@@ -183,14 +196,28 @@ export default function MediaPage() {
                   </Badge>
                 </div>
               </div>
-              <Button
-                variant="destructive"
-                size="icon"
-                className="absolute top-2 right-2 h-7 w-7 opacity-0 transition-opacity group-hover:opacity-100"
-                onClick={() => deleteMedia(item._id)}
-              >
-                <Trash2 className="h-3 w-3" />
-              </Button>
+              <div className="absolute top-2 right-2 flex gap-1 opacity-0 transition-opacity group-hover:opacity-100">
+                <Button
+                  variant="secondary"
+                  size="icon"
+                  className="h-7 w-7"
+                  onClick={() => copyUrl(item._id, item.url)}
+                >
+                  {copiedId === item._id ? (
+                    <Check className="h-3 w-3 text-green-600" />
+                  ) : (
+                    <Copy className="h-3 w-3" />
+                  )}
+                </Button>
+                <Button
+                  variant="destructive"
+                  size="icon"
+                  className="h-7 w-7"
+                  onClick={() => deleteMedia(item._id)}
+                >
+                  <Trash2 className="h-3 w-3" />
+                </Button>
+              </div>
             </div>
           ))}
         </div>

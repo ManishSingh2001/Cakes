@@ -3,9 +3,11 @@ import { auth } from "@/lib/auth";
 import { connectDB } from "@/lib/db";
 import { Cart } from "@/lib/models/Cart";
 import { Order } from "@/lib/models/Order";
+import { User } from "@/lib/models/User";
 import { SiteSettings } from "@/lib/models/SiteSettings";
 import { createRazorpayClient } from "@/lib/razorpay";
 import { generateOrderId } from "@/lib/utils";
+import { sendOrderConfirmationEmail, sendAdminOrderAlertEmail } from "@/lib/mailer";
 
 const FREE_DELIVERY_THRESHOLD = 500;
 const DELIVERY_CHARGE = 50;
@@ -80,6 +82,7 @@ export async function POST(request: NextRequest) {
 
       return {
         cakeId: item.cakeId,
+        sku: item.sku || "",
         name: item.name,
         image: item.image || "",
         priceOption,
@@ -199,6 +202,13 @@ export async function POST(request: NextRequest) {
         { $set: { items: [], totalAmount: 0 } }
       );
 
+      // Send order emails (non-blocking)
+      const codUser = await User.findById(session.user.id).lean();
+      if (codUser?.email) {
+        sendOrderConfirmationEmail(order, codUser.email).catch(() => {});
+        sendAdminOrderAlertEmail(order, codUser.email).catch(() => {});
+      }
+
       return NextResponse.json({
         success: true,
         gateway: "cod",
@@ -222,6 +232,13 @@ export async function POST(request: NextRequest) {
         { userId: session.user.id },
         { $set: { items: [], totalAmount: 0 } }
       );
+
+      // Send order emails (non-blocking)
+      const btUser = await User.findById(session.user.id).lean();
+      if (btUser?.email) {
+        sendOrderConfirmationEmail(order, btUser.email).catch(() => {});
+        sendAdminOrderAlertEmail(order, btUser.email).catch(() => {});
+      }
 
       return NextResponse.json({
         success: true,

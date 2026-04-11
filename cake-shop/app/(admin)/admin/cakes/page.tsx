@@ -4,7 +4,7 @@ import { useEffect, useState, useCallback } from "react";
 import { useForm, useFieldArray } from "react-hook-form";
 import { toast } from "sonner";
 import { Plus, Pencil, Trash2 } from "lucide-react";
-import { slugify, formatPrice } from "@/lib/utils";
+import { slugify, formatPrice, generateSku } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -39,6 +39,7 @@ import { useDebounce } from "@/hooks/useDebounce";
 
 interface CakeForm {
   _id?: string;
+  sku: string;
   name: string;
   slug: string;
   description: string;
@@ -54,6 +55,7 @@ interface CakeForm {
 
 interface CakeRow {
   _id: string;
+  sku: string;
   name: string;
   slug: string;
   description: string;
@@ -82,6 +84,7 @@ export default function CakesPage() {
   const { register, handleSubmit, control, setValue, watch, reset } =
     useForm<CakeForm>({
       defaultValues: {
+        sku: "",
         name: "",
         slug: "",
         description: "",
@@ -143,6 +146,7 @@ export default function CakesPage() {
   const openNew = () => {
     setEditing(null);
     reset({
+      sku: "",
       name: "",
       slug: "",
       description: "",
@@ -167,6 +171,7 @@ export default function CakesPage() {
     setEditing(id);
     reset({
       ...cake,
+      sku: cake.sku || "",
       caketype: cake.caketype as CakeForm["caketype"],
       type: cake.type as CakeForm["type"],
       category: cake.category as CakeForm["category"],
@@ -179,6 +184,7 @@ export default function CakesPage() {
     try {
       const body = {
         ...data,
+        sku: data.sku || generateSku(data.caketype, data.category),
         tags: data.tags
           .split(",")
           .map((t) => t.trim())
@@ -267,6 +273,7 @@ export default function CakesPage() {
         <Table>
           <TableHeader>
             <TableRow>
+              <TableHead>SKU</TableHead>
               <TableHead>Name</TableHead>
               <TableHead>Type</TableHead>
               <TableHead>Category</TableHead>
@@ -279,13 +286,14 @@ export default function CakesPage() {
           <TableBody>
             {cakes.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={7} className="h-24 text-center text-muted-foreground">
+                <TableCell colSpan={8} className="h-24 text-center text-muted-foreground">
                   No cakes found.
                 </TableCell>
               </TableRow>
             ) : (
               cakes.map((row) => (
                 <TableRow key={row._id}>
+                  <TableCell><code className="text-xs">{row.sku}</code></TableCell>
                   <TableCell className="font-medium">{row.name}</TableCell>
                   <TableCell>{row.caketype} / {row.type}</TableCell>
                   <TableCell>{row.category}</TableCell>
@@ -337,75 +345,99 @@ export default function CakesPage() {
       )}
 
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <DialogContent className="max-h-[90vh] max-w-2xl overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>{editing ? "Edit Cake" : "Add New Cake"}</DialogTitle>
+        <DialogContent className="max-h-[90vh] max-w-3xl overflow-y-auto p-0">
+          <DialogHeader className="sticky top-0 z-10 border-b bg-background px-6 py-4">
+            <DialogTitle className="text-xl">
+              {editing ? "Edit Cake" : "Add New Cake"}
+            </DialogTitle>
+            <p className="text-sm text-muted-foreground">
+              {editing ? "Update the details below" : "Fill in the details to add a new product"}
+            </p>
           </DialogHeader>
-          <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-            <div className="grid gap-4 sm:grid-cols-2">
-              <div>
-                <Label>Name</Label>
-                <Input {...register("name", { required: true })} />
+
+          <form onSubmit={handleSubmit(onSubmit)} className="space-y-6 px-6 pb-6">
+            {/* Basic Info */}
+            <div className="rounded-lg border p-4 space-y-4">
+              <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Basic Information</h3>
+              <div className="grid gap-4 sm:grid-cols-3">
+                <div className="sm:col-span-2">
+                  <Label>Product Name</Label>
+                  <Input {...register("name", { required: true })} placeholder="e.g. Chocolate Truffle" />
+                </div>
+                <div>
+                  <Label>SKU</Label>
+                  <Input
+                    {...register("sku")}
+                    placeholder="Auto"
+                    className="uppercase font-mono"
+                    readOnly={!!editing}
+                  />
+                  <p className="text-[11px] text-muted-foreground mt-1">
+                    {editing ? "Read-only" : "Auto-generated if blank"}
+                  </p>
+                </div>
+              </div>
+              <div className="grid gap-4 sm:grid-cols-2">
+                <div>
+                  <Label>Slug</Label>
+                  <Input {...register("slug", { required: true })} placeholder="auto-generated-from-name" />
+                </div>
+                <div>
+                  <Label>Category</Label>
+                  <Input {...register("category", { required: true })} placeholder="e.g. Birthday, Wedding" />
+                </div>
               </div>
               <div>
-                <Label>Slug</Label>
-                <Input {...register("slug", { required: true })} />
+                <Label>Description</Label>
+                <Textarea {...register("description")} rows={3} placeholder="Describe this product..." />
               </div>
             </div>
 
-            <div>
-              <Label>Description</Label>
-              <Textarea {...register("description")} rows={3} />
-            </div>
-
-            <div className="grid gap-4 sm:grid-cols-3">
-              <div>
-                <Label>Cake Type</Label>
-                <Select
-                  value={watch("caketype")}
-                  onValueChange={(val) =>
-                    setValue("caketype", val as "cake" | "pastries")
-                  }
-                >
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="cake">Cake</SelectItem>
-                    <SelectItem value="pastries">Pastries</SelectItem>
-                  </SelectContent>
-                </Select>
+            {/* Classification */}
+            <div className="rounded-lg border p-4 space-y-4">
+              <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Classification</h3>
+              <div className="grid gap-4 sm:grid-cols-2">
+                <div>
+                  <Label>Cake Type</Label>
+                  <Select
+                    value={watch("caketype")}
+                    onValueChange={(val) => setValue("caketype", val as "cake" | "pastries")}
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="cake">Cake</SelectItem>
+                      <SelectItem value="pastries">Pastries</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <Label>Type</Label>
+                  <Select
+                    value={watch("type")}
+                    onValueChange={(val) => setValue("type", val as "egg" | "eggless")}
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="egg">Egg</SelectItem>
+                      <SelectItem value="eggless">Eggless</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
               </div>
               <div>
-                <Label>Type</Label>
-                <Select
-                  value={watch("type")}
-                  onValueChange={(val) =>
-                    setValue("type", val as "egg" | "eggless")
-                  }
-                >
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="egg">Egg</SelectItem>
-                    <SelectItem value="eggless">Eggless</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div>
-                <Label>Category</Label>
-                <Input
-                  {...register("category", { required: true })}
-                  placeholder="e.g. Birthday"
-                />
+                <Label>Tags</Label>
+                <Input {...register("tags")} placeholder="chocolate, birthday, premium (comma separated)" />
               </div>
             </div>
 
             {/* Images */}
-            <div>
-              <div className="flex items-center justify-between mb-2">
-                <Label>Images</Label>
+            <div className="rounded-lg border p-4 space-y-4">
+              <div className="flex items-center justify-between">
+                <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Images</h3>
                 <Button
                   type="button"
                   variant="outline"
@@ -413,113 +445,136 @@ export default function CakesPage() {
                   onClick={() => imagesField.append({ url: "", alt: "" })}
                 >
                   <Plus className="mr-1 h-3 w-3" />
-                  Add
+                  Add Image
                 </Button>
               </div>
-              {imagesField.fields.map((field, index) => (
-                <div key={field.id} className="mb-3 flex items-start gap-2">
-                  <div className="flex-1">
+              {imagesField.fields.length === 0 && (
+                <div className="flex flex-col items-center justify-center rounded-lg border-2 border-dashed py-8 text-muted-foreground">
+                  <p className="text-sm">No images added yet</p>
+                  <p className="text-xs">Click "Add Image" to upload product photos</p>
+                </div>
+              )}
+              <div className="grid gap-3 sm:grid-cols-2">
+                {imagesField.fields.map((field, index) => (
+                  <div key={field.id} className="relative rounded-lg border p-3">
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      className="absolute right-1 top-1 h-7 w-7"
+                      onClick={() => imagesField.remove(index)}
+                    >
+                      <Trash2 className="h-3.5 w-3.5 text-destructive" />
+                    </Button>
                     <ImageUploader
                       value={watch(`images.${index}.url`)}
                       onChange={(url) => setValue(`images.${index}.url`, url)}
                       folder="cakes"
                     />
                   </div>
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => imagesField.remove(index)}
-                  >
-                    <Trash2 className="h-4 w-4 text-destructive" />
-                  </Button>
-                </div>
-              ))}
+                ))}
+              </div>
             </div>
 
-            {/* Prices */}
-            <div>
-              <div className="flex items-center justify-between mb-2">
-                <Label>Prices (Weight-based)</Label>
+            {/* Pricing */}
+            <div className="rounded-lg border p-4 space-y-4">
+              <div className="flex items-center justify-between">
+                <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Pricing</h3>
                 <Button
                   type="button"
                   variant="outline"
                   size="sm"
-                  onClick={() =>
-                    pricesField.append({ weight: 0.5, costPrice: 0, sellPrice: 0 })
-                  }
+                  onClick={() => pricesField.append({ weight: 0.5, costPrice: 0, sellPrice: 0 })}
                 >
                   <Plus className="mr-1 h-3 w-3" />
-                  Add
+                  Add Tier
                 </Button>
               </div>
-              {pricesField.fields.map((field, index) => (
-                <div
-                  key={field.id}
-                  className="mb-2 flex items-center gap-2"
-                >
-                  <Input
-                    type="number"
-                    step="0.25"
-                    placeholder="Weight (kg)"
-                    {...register(`prices.${index}.weight`, {
-                      valueAsNumber: true,
-                    })}
-                    className="w-28"
-                  />
-                  <Input
-                    type="number"
-                    placeholder="Cost"
-                    {...register(`prices.${index}.costPrice`, {
-                      valueAsNumber: true,
-                    })}
-                    className="w-28"
-                  />
-                  <Input
-                    type="number"
-                    placeholder="Sell"
-                    {...register(`prices.${index}.sellPrice`, {
-                      valueAsNumber: true,
-                    })}
-                    className="w-28"
-                  />
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => pricesField.remove(index)}
-                  >
-                    <Trash2 className="h-4 w-4 text-destructive" />
-                  </Button>
+              {pricesField.fields.length > 0 && (
+                <div className="rounded-lg border overflow-hidden">
+                  <div className="grid grid-cols-[1fr_1fr_1fr_40px] gap-0 bg-muted/50 px-3 py-2 text-xs font-medium text-muted-foreground">
+                    <span>Weight (kg)</span>
+                    <span>Cost Price</span>
+                    <span>Sell Price</span>
+                    <span></span>
+                  </div>
+                  {pricesField.fields.map((field, index) => (
+                    <div
+                      key={field.id}
+                      className="grid grid-cols-[1fr_1fr_1fr_40px] gap-2 border-t px-3 py-2 items-center"
+                    >
+                      <Input
+                        type="number"
+                        step="0.25"
+                        placeholder="0.5"
+                        {...register(`prices.${index}.weight`, { valueAsNumber: true })}
+                        className="h-9"
+                      />
+                      <Input
+                        type="number"
+                        placeholder="0"
+                        {...register(`prices.${index}.costPrice`, { valueAsNumber: true })}
+                        className="h-9"
+                      />
+                      <Input
+                        type="number"
+                        placeholder="0"
+                        {...register(`prices.${index}.sellPrice`, { valueAsNumber: true })}
+                        className="h-9"
+                      />
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        className="h-9 w-9"
+                        onClick={() => pricesField.remove(index)}
+                      >
+                        <Trash2 className="h-3.5 w-3.5 text-destructive" />
+                      </Button>
+                    </div>
+                  ))}
                 </div>
-              ))}
+              )}
+              {pricesField.fields.length === 0 && (
+                <p className="text-center text-sm text-muted-foreground py-4">
+                  Add at least one price tier
+                </p>
+              )}
             </div>
 
-            <div>
-              <Label>Tags (comma separated)</Label>
-              <Input {...register("tags")} placeholder="chocolate, birthday, premium" />
-            </div>
-
-            <div className="flex items-center gap-6">
-              <div className="flex items-center gap-2">
-                <Switch
-                  checked={watch("isFeatured")}
-                  onCheckedChange={(checked) => setValue("isFeatured", !!checked)}
-                />
-                <Label>Featured</Label>
+            {/* Visibility */}
+            <div className="rounded-lg border p-4">
+              <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-4">Visibility</h3>
+              <div className="flex items-center gap-8">
+                <div className="flex items-center gap-3">
+                  <Switch
+                    checked={watch("isFeatured")}
+                    onCheckedChange={(checked) => setValue("isFeatured", !!checked)}
+                  />
+                  <div>
+                    <Label className="text-sm font-medium">Featured</Label>
+                    <p className="text-xs text-muted-foreground">Show on homepage</p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-3">
+                  <Switch
+                    checked={watch("isAvailable")}
+                    onCheckedChange={(checked) => setValue("isAvailable", !!checked)}
+                  />
+                  <div>
+                    <Label className="text-sm font-medium">Available</Label>
+                    <p className="text-xs text-muted-foreground">Visible on menu</p>
+                  </div>
+                </div>
               </div>
-              <div className="flex items-center gap-2">
-                <Switch
-                  checked={watch("isAvailable")}
-                  onCheckedChange={(checked) => setValue("isAvailable", !!checked)}
-                />
-                <Label>Available</Label>
-              </div>
             </div>
 
-            <Button type="submit" className="w-full">
-              {editing ? "Update Cake" : "Create Cake"}
-            </Button>
+            {/* Submit */}
+            <div className="sticky bottom-0 -mx-6 -mb-6 border-t bg-background px-6 py-4">
+              <Button type="submit" className="w-full" size="lg">
+                {editing ? "Update Cake" : "Create Cake"}
+              </Button>
+            </div>
           </form>
         </DialogContent>
       </Dialog>

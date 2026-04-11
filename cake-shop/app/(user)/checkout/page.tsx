@@ -79,6 +79,19 @@ const DELIVERY_SLOTS = [
   { value: "6PM-9PM", label: "6:00 PM - 9:00 PM" },
 ] as const;
 
+interface SavedAddress {
+  _id?: string;
+  label: string;
+  fullName: string;
+  phone: string;
+  street: string;
+  city: string;
+  state: string;
+  zipCode: string;
+  landmark: string;
+  isDefault: boolean;
+}
+
 export default function CheckoutPage() {
   const router = useRouter();
   const [cart, setCart] = useState<Cart | null>(null);
@@ -86,10 +99,13 @@ export default function CheckoutPage() {
   const [submitting, setSubmitting] = useState(false);
   const [gateways, setGateways] = useState<Gateway[]>([]);
   const [selectedGateway, setSelectedGateway] = useState("");
+  const [savedAddresses, setSavedAddresses] = useState<SavedAddress[]>([]);
+  const [selectedAddressId, setSelectedAddressId] = useState<string>("new");
 
   const {
     register,
     handleSubmit,
+    setValue,
     formState: { errors },
   } = useForm<CheckoutInput>({
     resolver: zodResolver(checkoutSchema),
@@ -132,16 +148,61 @@ export default function CheckoutPage() {
         setSelectedGateway(data.gateways[0].id);
       }
     } catch {
-      // Default to razorpay
       setGateways([{ id: "razorpay", displayName: "Razorpay" }]);
       setSelectedGateway("razorpay");
     }
   }, []);
 
+  const fetchAddresses = useCallback(async () => {
+    try {
+      const res = await fetch("/api/user/profile");
+      if (!res.ok) return;
+      const data = await res.json();
+      const addresses = data.user?.addresses || [];
+      setSavedAddresses(addresses);
+      // Auto-select default address
+      const defaultAddr = addresses.find((a: SavedAddress) => a.isDefault) || addresses[0];
+      if (defaultAddr) {
+        setSelectedAddressId(defaultAddr._id || "0");
+        fillAddress(defaultAddr);
+      }
+    } catch {
+      // ignore
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const fillAddress = (addr: SavedAddress) => {
+    setValue("deliveryAddress.fullName", addr.fullName);
+    setValue("deliveryAddress.phone", addr.phone);
+    setValue("deliveryAddress.street", addr.street);
+    setValue("deliveryAddress.city", addr.city);
+    setValue("deliveryAddress.state", addr.state);
+    setValue("deliveryAddress.zipCode", addr.zipCode);
+    setValue("deliveryAddress.landmark", addr.landmark || "");
+  };
+
+  const handleAddressSelect = (value: string) => {
+    setSelectedAddressId(value);
+    if (value === "new") {
+      setValue("deliveryAddress.fullName", "");
+      setValue("deliveryAddress.phone", "");
+      setValue("deliveryAddress.street", "");
+      setValue("deliveryAddress.city", "");
+      setValue("deliveryAddress.state", "");
+      setValue("deliveryAddress.zipCode", "");
+      setValue("deliveryAddress.landmark", "");
+    } else {
+      const addr = savedAddresses.find((a) => a._id === value) || savedAddresses[parseInt(value)];
+      if (addr) fillAddress(addr);
+    }
+  };
+
   useEffect(() => {
     fetchCart();
     fetchGateways();
-  }, [fetchCart, fetchGateways]);
+    fetchAddresses();
+  }, [fetchCart, fetchGateways, fetchAddresses]);
 
   // Load Razorpay script if needed
   useEffect(() => {
@@ -313,6 +374,23 @@ export default function CheckoutPage() {
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
+                {savedAddresses.length > 0 && (
+                  <div className="space-y-2">
+                    <Label>Saved Addresses</Label>
+                    <select
+                      value={selectedAddressId}
+                      onChange={(e) => handleAddressSelect(e.target.value)}
+                      className="flex h-9 w-full rounded-lg border border-input bg-transparent px-3 py-1 text-sm outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
+                    >
+                      {savedAddresses.map((addr, idx) => (
+                        <option key={addr._id || idx} value={addr._id || String(idx)}>
+                          {addr.label} — {addr.street}, {addr.city}{addr.isDefault ? " (Default)" : ""}
+                        </option>
+                      ))}
+                      <option value="new">+ Enter new address</option>
+                    </select>
+                  </div>
+                )}
                 <div className="grid gap-4 sm:grid-cols-2">
                   <div className="space-y-2">
                     <Label htmlFor="fullName">Full Name</Label>

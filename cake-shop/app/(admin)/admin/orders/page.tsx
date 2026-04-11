@@ -1,6 +1,6 @@
 import { connectDB } from "@/lib/db";
 import { Order } from "@/lib/models/Order";
-import { formatPrice, formatDate } from "@/lib/utils";
+import { formatPrice, formatDateTime } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import {
   Table,
@@ -89,7 +89,7 @@ export default async function OrdersPage({
               <TableRow>
                 <TableHead>Order ID</TableHead>
                 <TableHead>Customer</TableHead>
-                <TableHead>Date</TableHead>
+                <TableHead>Date & Time</TableHead>
                 <TableHead>Status</TableHead>
                 <TableHead className="text-right">Total</TableHead>
               </TableRow>
@@ -108,7 +108,7 @@ export default async function OrdersPage({
                   <TableCell>
                     {(order.userId as Record<string, string>)?.name || "N/A"}
                   </TableCell>
-                  <TableCell>{formatDate(order.createdAt as string)}</TableCell>
+                  <TableCell>{formatDateTime(order.createdAt as string)}</TableCell>
                   <TableCell>
                     <Badge
                       variant="secondary"

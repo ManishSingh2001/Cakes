@@ -17,6 +17,7 @@ export interface IReview {
 
 export interface ICake {
   _id: string;
+  sku: string;
   name: string;
   description: string;
   caketype: "cake" | "pastries";
@@ -57,6 +58,7 @@ const reviewSchema = new Schema<IReview>(
 
 const cakeSchema = new Schema<ICake>(
   {
+    sku: { type: String, unique: true, sparse: true, uppercase: true, trim: true },
     name: { type: String, required: true, trim: true },
     description: { type: String, default: "" },
     caketype: { type: String, enum: ["cake", "pastries"], required: true },
@@ -81,6 +83,7 @@ const cakeSchema = new Schema<ICake>(
   { timestamps: true }
 );
 
+cakeSchema.index({ sku: 1 });
 cakeSchema.index({ caketype: 1, type: 1, category: 1 });
 cakeSchema.index({ isFeatured: 1 });
 

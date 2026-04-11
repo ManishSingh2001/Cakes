@@ -17,6 +17,19 @@ export const registerSchema = z
     path: ["confirmPassword"],
   });
 
+export const savedAddressSchema = z.object({
+  _id: z.string().optional(),
+  label: z.string().default("Home"),
+  fullName: z.string().min(1),
+  phone: z.string().min(1),
+  street: z.string().min(1),
+  city: z.string().min(1),
+  state: z.string().min(1),
+  zipCode: z.string().min(1),
+  landmark: z.string().default(""),
+  isDefault: z.boolean().default(false),
+});
+
 export const profileUpdateSchema = z.object({
   name: z.string().min(2).optional(),
   phone: z.string().optional(),
@@ -30,6 +43,7 @@ export const profileUpdateSchema = z.object({
       country: z.string().optional(),
     })
     .optional(),
+  addresses: z.array(savedAddressSchema).optional(),
 });
 
 export type LoginInput = z.infer<typeof loginSchema>;

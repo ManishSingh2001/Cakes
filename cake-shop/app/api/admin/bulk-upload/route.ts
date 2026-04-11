@@ -6,7 +6,7 @@ import { Cake } from "@/lib/models/Cake";
 import { Addon } from "@/lib/models/Addon";
 import { cakeSchema } from "@/lib/validations/cake.schema";
 import { addonSchema } from "@/lib/validations/addon.schema";
-import { slugify } from "@/lib/utils";
+import { slugify, generateSku } from "@/lib/utils";
 
 function parseBoolean(val: unknown): boolean {
   if (typeof val === "boolean") return val;
@@ -42,6 +42,7 @@ function processCakeRows(rows: Record<string, unknown>[]) {
       grouped.set(name, {
         firstRow: i + 2, // Excel row (1-indexed header + 1)
         data: {
+          sku: String(row.sku || "").trim().toUpperCase() || generateSku(String(row.caketype || "cake"), String(row.category || "")),
           name,
           slug: String(row.slug || "").trim() || slugify(name),
           description: String(row.description || ""),

@@ -34,6 +34,27 @@ export function formatDate(date: Date | string | undefined | null): string {
   }).format(d);
 }
 
+export function formatDateTime(date: Date | string | undefined | null): string {
+  if (!date) return "";
+  const d = new Date(date);
+  if (isNaN(d.getTime())) return "";
+  return new Intl.DateTimeFormat("en-IN", {
+    year: "numeric",
+    month: "short",
+    day: "numeric",
+    hour: "numeric",
+    minute: "2-digit",
+    hour12: true,
+  }).format(d);
+}
+
+export function generateSku(caketype: string, category: string): string {
+  const typeCode = caketype === "pastries" ? "PS" : "CK";
+  const catCode = category.slice(0, 3).toUpperCase() || "GEN";
+  const random = Math.random().toString(36).slice(2, 6).toUpperCase();
+  return `${typeCode}-${catCode}-${random}`;
+}
+
 export function generateOrderId(): string {
   const date = new Date().toISOString().slice(0, 10).replace(/-/g, "");
   const random = Math.random().toString(36).slice(2, 6).toUpperCase();

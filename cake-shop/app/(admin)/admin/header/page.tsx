@@ -16,6 +16,8 @@ interface HeaderForm {
     imageUrl: string;
     altText: string;
     linkTo: string;
+    width: number;
+    height: number;
   };
   navigation: {
     label: string;
@@ -37,7 +39,7 @@ export default function HeaderPage() {
   const { register, handleSubmit, control, setValue, watch, reset } =
     useForm<HeaderForm>({
       defaultValues: {
-        logo: { imageUrl: "", altText: "", linkTo: "/" },
+        logo: { imageUrl: "", altText: "", linkTo: "/", width: 140, height: 40 },
         navigation: [],
         ctaButton: { text: "Order Now", href: "/menu", isVisible: true },
         isSticky: true,
@@ -53,7 +55,16 @@ export default function HeaderPage() {
     fetch("/api/admin/header")
       .then((r) => r.json())
       .then((res) => {
-        if (res.success && res.data) reset(res.data);
+        if (res.success && res.data) {
+          reset({
+            ...res.data,
+            logo: {
+              ...res.data.logo,
+              width: res.data.logo?.width ?? 140,
+              height: res.data.logo?.height ?? 40,
+            },
+          });
+        }
       })
       .catch(() => toast.error("Failed to load header data"))
       .finally(() => setLoading(false));
@@ -113,6 +124,28 @@ export default function HeaderPage() {
               <div>
                 <Label htmlFor="logoLink">Link To</Label>
                 <Input id="logoLink" {...register("logo.linkTo")} />
+              </div>
+            </div>
+            <div className="grid gap-4 sm:grid-cols-2">
+              <div>
+                <Label htmlFor="logoWidth">Width (px)</Label>
+                <Input
+                  id="logoWidth"
+                  type="number"
+                  min={20}
+                  max={500}
+                  {...register("logo.width", { valueAsNumber: true })}
+                />
+              </div>
+              <div>
+                <Label htmlFor="logoHeight">Height (px)</Label>
+                <Input
+                  id="logoHeight"
+                  type="number"
+                  min={10}
+                  max={200}
+                  {...register("logo.height", { valueAsNumber: true })}
+                />
               </div>
             </div>
           </CardContent>
