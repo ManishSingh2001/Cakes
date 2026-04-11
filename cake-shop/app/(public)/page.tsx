@@ -21,7 +21,7 @@ async function getHomeData() {
 
   // Get recent reviews with comments (from all cakes)
   const cakesWithReviews = await Cake.find(
-    { "reviews.comment": { $ne: "" }, isAvailable: true },
+    { "reviews.0": { $exists: true }, isAvailable: true },
     { name: 1, reviews: 1 }
   ).lean();
 
@@ -31,24 +31,26 @@ async function getHomeData() {
     rating: number;
     comment: string;
     cakeName: string;
+    createdAt: string;
   }[] = [];
 
   for (const c of cakesWithReviews) {
-    for (const r of c.reviews || []) {
-      if (r.comment && r.comment.trim().length > 10) {
+    for (const r of (c.reviews || []) as Array<{ _id: unknown; username: string; rating: number; comment: string; createdAt: Date }>) {
+      if (r.comment && r.comment.trim().length > 0) {
         allReviews.push({
           _id: String(r._id),
           username: r.username,
           rating: r.rating,
           comment: r.comment,
           cakeName: c.name,
+          createdAt: r.createdAt ? new Date(r.createdAt).toISOString() : "",
         });
       }
     }
   }
 
   // Sort by most recent and take top 12
-  allReviews.sort((a, b) => (b._id > a._id ? 1 : -1));
+  allReviews.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
   const topReviews = allReviews.slice(0, 12);
 
   return {
