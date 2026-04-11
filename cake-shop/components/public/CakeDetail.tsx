@@ -53,12 +53,15 @@ export function CakeDetail({ cake, addons }: CakeDetailProps) {
   }, 0);
 
   const total = (currentPrice?.sellPrice || 0) * quantity + addonsTotal;
+  const [addingToCart, setAddingToCart] = useState(false);
 
   const handleAddToCart = async () => {
     if (!session) {
       toast.error("Please login to add items to cart");
       return;
     }
+    if (addingToCart) return;
+    setAddingToCart(true);
     try {
       const res = await fetch("/api/user/cart", {
         method: "POST",
@@ -80,6 +83,8 @@ export function CakeDetail({ cake, addons }: CakeDetailProps) {
       } else toast.error("Failed to add to cart");
     } catch {
       toast.error("Something went wrong");
+    } finally {
+      setAddingToCart(false);
     }
   };
 
@@ -318,11 +323,16 @@ export function CakeDetail({ cake, addons }: CakeDetailProps) {
               </Button>
               <Button
                 onClick={handleAddToCart}
+                disabled={addingToCart}
                 className="bg-cake-gold text-white hover:bg-cake-brown"
                 size="lg"
               >
-                <ShoppingCart className="mr-2 h-5 w-5" />
-                Add to Cart
+                {addingToCart ? (
+                  <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+                ) : (
+                  <ShoppingCart className="mr-2 h-5 w-5" />
+                )}
+                {addingToCart ? "Adding..." : "Add to Cart"}
               </Button>
             </div>
           </div>
