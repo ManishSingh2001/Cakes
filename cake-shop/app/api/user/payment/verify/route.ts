@@ -4,7 +4,9 @@ import { auth } from "@/lib/auth";
 import { connectDB } from "@/lib/db";
 import { Order } from "@/lib/models/Order";
 import { Cart } from "@/lib/models/Cart";
+import { User } from "@/lib/models/User";
 import { SiteSettings } from "@/lib/models/SiteSettings";
+import { sendOrderConfirmationEmail, sendAdminOrderAlertEmail } from "@/lib/mailer";
 
 export async function POST(request: NextRequest) {
   try {
@@ -92,6 +94,13 @@ export async function POST(request: NextRequest) {
         { $set: { items: [], totalAmount: 0 } }
       );
 
+      // Send order emails (non-blocking)
+      const user = await User.findById(session.user.id).lean();
+      if (user?.email) {
+        sendOrderConfirmationEmail(order, user.email).catch(() => {});
+        sendAdminOrderAlertEmail(order, user.email).catch(() => {});
+      }
+
       return NextResponse.json({
         success: true,
         message: "Payment verified successfully",
@@ -142,6 +151,13 @@ export async function POST(request: NextRequest) {
             { userId: session.user.id },
             { $set: { items: [], totalAmount: 0 } }
           );
+
+          // Send order emails (non-blocking)
+          const stripeUser = await User.findById(session.user.id).lean();
+          if (stripeUser?.email) {
+            sendOrderConfirmationEmail(order, stripeUser.email).catch(() => {});
+            sendAdminOrderAlertEmail(order, stripeUser.email).catch(() => {});
+          }
 
           return NextResponse.json({
             success: true,

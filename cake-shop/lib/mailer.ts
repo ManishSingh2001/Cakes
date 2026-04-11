@@ -1,4 +1,9 @@
 import nodemailer from "nodemailer";
+import { connectDB } from "@/lib/db";
+import { SiteSettings } from "@/lib/models/SiteSettings";
+import { buildOrderConfirmationHtml } from "@/lib/emails/order-confirmation";
+import { buildAdminOrderAlertHtml } from "@/lib/emails/admin-order-alert";
+import { buildOrderStatusUpdateHtml } from "@/lib/emails/order-status-update";
 
 const transporter = nodemailer.createTransport({
   service: process.env.SMPT_SERVICE,
@@ -10,6 +15,31 @@ const transporter = nodemailer.createTransport({
     pass: process.env.SMPT_PASSWORD,
   },
 });
+
+async function getEmailSettings() {
+  await connectDB();
+  const settings = await SiteSettings.findOne().lean();
+  return {
+    emailNotifications: settings?.emailNotifications || { enabled: false },
+    shopName: settings?.siteName || "Sweet Delights Bakery",
+  };
+}
+
+function replaceSubjectVars(subject: string, vars: Record<string, string>) {
+  let result = subject;
+  for (const [key, value] of Object.entries(vars)) {
+    result = result.replace(new RegExp(`\\{\\{${key}\\}\\}`, "g"), value);
+  }
+  return result;
+}
+
+function formatDate(date: Date | string) {
+  return new Date(date).toLocaleDateString("en-IN", {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+  });
+}
 
 export async function sendOtpEmail(to: string, otp: string) {
   await transporter.sendMail({
@@ -28,4 +58,110 @@ export async function sendOtpEmail(to: string, otp: string) {
       </div>
     `,
   });
+}
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export async function sendOrderConfirmationEmail(order: any, customerEmail: string) {
+  try {
+    const { emailNotifications, shopName } = await getEmailSettings();
+    if (!emailNotifications?.enabled || !emailNotifications?.orderConfirmation?.enabled) return;
+
+    const subject = replaceSubjectVars(
+      emailNotifications.orderConfirmation.subject || "Your order {{orderId}} has been confirmed!",
+      { orderId: order.orderId }
+    );
+
+    const html = buildOrderConfirmationHtml({
+      orderId: order.orderId,
+      customerName: order.deliveryAddress.fullName,
+      items: order.items,
+      subtotal: order.subtotal,
+      deliveryCharge: order.deliveryCharge,
+      discount: order.discount || 0,
+      totalAmount: order.totalAmount,
+      paymentMethod: order.payment.method,
+      deliveryAddress: order.deliveryAddress,
+      deliveryDate: formatDate(order.deliveryDate),
+      deliverySlot: order.deliverySlot,
+      shopName,
+    });
+
+    await transporter.sendMail({
+      from: `"${shopName}" <${process.env.SMPT_MAIL}>`,
+      to: customerEmail,
+      subject,
+      html,
+    });
+  } catch (error) {
+    console.error("Failed to send order confirmation email:", error);
+  }
+}
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export async function sendAdminOrderAlertEmail(order: any, customerEmail: string) {
+  try {
+    const { emailNotifications, shopName } = await getEmailSettings();
+    if (!emailNotifications?.enabled || !emailNotifications?.adminOrderAlert?.enabled) return;
+    if (!emailNotifications.adminEmail) return;
+
+    const subject = replaceSubjectVars(
+      emailNotifications.adminOrderAlert.subject || "New order received: {{orderId}}",
+      { orderId: order.orderId }
+    );
+
+    const html = buildAdminOrderAlertHtml({
+      orderId: order.orderId,
+      customerName: order.deliveryAddress.fullName,
+      customerEmail,
+      customerPhone: order.deliveryAddress.phone,
+      items: order.items,
+      totalAmount: order.totalAmount,
+      paymentMethod: order.payment.method,
+      deliveryAddress: order.deliveryAddress,
+      deliveryDate: formatDate(order.deliveryDate),
+      deliverySlot: order.deliverySlot,
+      specialInstructions: order.specialInstructions,
+      shopName,
+    });
+
+    await transporter.sendMail({
+      from: `"${shopName}" <${process.env.SMPT_MAIL}>`,
+      to: emailNotifications.adminEmail,
+      subject,
+      html,
+    });
+  } catch (error) {
+    console.error("Failed to send admin order alert email:", error);
+  }
+}
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export async function sendOrderStatusUpdateEmail(order: any, customerEmail: string, newStatus: string, note?: string) {
+  try {
+    const { emailNotifications, shopName } = await getEmailSettings();
+    if (!emailNotifications?.enabled || !emailNotifications?.orderStatusUpdate?.enabled) return;
+
+    const statusLabel = newStatus.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
+    const subject = replaceSubjectVars(
+      emailNotifications.orderStatusUpdate.subject || "Your order {{orderId}} status update",
+      { orderId: order.orderId, status: statusLabel }
+    );
+
+    const html = buildOrderStatusUpdateHtml({
+      orderId: order.orderId,
+      customerName: order.deliveryAddress.fullName,
+      newStatus,
+      note,
+      shopName,
+    });
+
+    await transporter.sendMail({
+      from: `"${shopName}" <${process.env.SMPT_MAIL}>`,
+      to: customerEmail,
+      subject,
+      html,
+    });
+  } catch (error) {
+    console.error("Failed to send order status update email:", error);
+  }
 }

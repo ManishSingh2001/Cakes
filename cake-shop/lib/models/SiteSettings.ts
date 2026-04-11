@@ -20,6 +20,22 @@ export interface ISiteSettings {
     isEnabled: boolean;
     message: string;
   };
+  emailNotifications: {
+    enabled: boolean;
+    adminEmail: string;
+    orderConfirmation: {
+      enabled: boolean;
+      subject: string;
+    };
+    adminOrderAlert: {
+      enabled: boolean;
+      subject: string;
+    };
+    orderStatusUpdate: {
+      enabled: boolean;
+      subject: string;
+    };
+  };
   paymentGateways: {
     razorpay: {
       enabled: boolean;
@@ -68,6 +84,22 @@ const siteSettingsSchema = new Schema<ISiteSettings>(
     maintenance: {
       isEnabled: { type: Boolean, default: false },
       message: { type: String, default: "We'll be back soon!" },
+    },
+    emailNotifications: {
+      enabled: { type: Boolean, default: false },
+      adminEmail: { type: String, default: "" },
+      orderConfirmation: {
+        enabled: { type: Boolean, default: true },
+        subject: { type: String, default: "Your order {{orderId}} has been confirmed!" },
+      },
+      adminOrderAlert: {
+        enabled: { type: Boolean, default: true },
+        subject: { type: String, default: "New order received: {{orderId}}" },
+      },
+      orderStatusUpdate: {
+        enabled: { type: Boolean, default: true },
+        subject: { type: String, default: "Your order {{orderId}} status update" },
+      },
     },
     paymentGateways: {
       razorpay: {

@@ -2,7 +2,9 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { connectDB } from "@/lib/db";
 import { Order } from "@/lib/models/Order";
+import { User } from "@/lib/models/User";
 import { orderStatusUpdateSchema } from "@/lib/validations/order.schema";
+import { sendOrderStatusUpdateEmail } from "@/lib/mailer";
 
 export async function GET() {
   try {
@@ -94,6 +96,12 @@ export async function PUT(request: NextRequest) {
         { success: false, message: "Order not found" },
         { status: 404 }
       );
+    }
+
+    // Send status update email to customer (non-blocking)
+    const customer = await User.findById(order.userId).lean();
+    if (customer?.email) {
+      sendOrderStatusUpdateEmail(order, customer.email, orderStatus, note).catch(() => {});
     }
 
     return NextResponse.json({ success: true, data: order });

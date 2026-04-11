@@ -31,6 +31,13 @@ interface SettingsForm {
     isEnabled: boolean;
     message: string;
   };
+  emailNotifications: {
+    enabled: boolean;
+    adminEmail: string;
+    orderConfirmation: { enabled: boolean; subject: string };
+    adminOrderAlert: { enabled: boolean; subject: string };
+    orderStatusUpdate: { enabled: boolean; subject: string };
+  };
   paymentGateways: {
     razorpay: { enabled: boolean; displayName: string; keyId: string; keySecret: string };
     stripe: { enabled: boolean; displayName: string; publishableKey: string; secretKey: string };
@@ -64,6 +71,13 @@ export default function SettingsPage() {
           isEnabled: false,
           message: "We'll be back soon!",
         },
+        emailNotifications: {
+          enabled: false,
+          adminEmail: "",
+          orderConfirmation: { enabled: true, subject: "Your order {{orderId}} has been confirmed!" },
+          adminOrderAlert: { enabled: true, subject: "New order received: {{orderId}}" },
+          orderStatusUpdate: { enabled: true, subject: "Your order {{orderId}} status update" },
+        },
         paymentGateways: {
           razorpay: { enabled: true, displayName: "Razorpay", keyId: "", keySecret: "" },
           stripe: { enabled: false, displayName: "Stripe", publishableKey: "", secretKey: "" },
@@ -73,14 +87,48 @@ export default function SettingsPage() {
       },
     });
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const resetWithDefaults = (d: any) => {
+    reset({
+      ...d,
+      maintenance: {
+        isEnabled: d.maintenance?.isEnabled ?? false,
+        message: d.maintenance?.message ?? "We'll be back soon!",
+      },
+      emailNotifications: {
+        enabled: d.emailNotifications?.enabled ?? false,
+        adminEmail: d.emailNotifications?.adminEmail ?? "",
+        orderConfirmation: {
+          enabled: d.emailNotifications?.orderConfirmation?.enabled ?? true,
+          subject: d.emailNotifications?.orderConfirmation?.subject ?? "Your order {{orderId}} has been confirmed!",
+        },
+        adminOrderAlert: {
+          enabled: d.emailNotifications?.adminOrderAlert?.enabled ?? true,
+          subject: d.emailNotifications?.adminOrderAlert?.subject ?? "New order received: {{orderId}}",
+        },
+        orderStatusUpdate: {
+          enabled: d.emailNotifications?.orderStatusUpdate?.enabled ?? true,
+          subject: d.emailNotifications?.orderStatusUpdate?.subject ?? "Your order {{orderId}} status update",
+        },
+      },
+      paymentGateways: {
+        razorpay: { enabled: d.paymentGateways?.razorpay?.enabled ?? true, displayName: d.paymentGateways?.razorpay?.displayName ?? "Razorpay", keyId: d.paymentGateways?.razorpay?.keyId ?? "", keySecret: d.paymentGateways?.razorpay?.keySecret ?? "" },
+        stripe: { enabled: d.paymentGateways?.stripe?.enabled ?? false, displayName: d.paymentGateways?.stripe?.displayName ?? "Stripe", publishableKey: d.paymentGateways?.stripe?.publishableKey ?? "", secretKey: d.paymentGateways?.stripe?.secretKey ?? "" },
+        cod: { enabled: d.paymentGateways?.cod?.enabled ?? false, displayName: d.paymentGateways?.cod?.displayName ?? "Cash on Delivery", instructions: d.paymentGateways?.cod?.instructions ?? "Pay when your order is delivered." },
+        bankTransfer: { enabled: d.paymentGateways?.bankTransfer?.enabled ?? false, displayName: d.paymentGateways?.bankTransfer?.displayName ?? "Bank Transfer", instructions: d.paymentGateways?.bankTransfer?.instructions ?? "Transfer the amount to our bank account.", accountDetails: d.paymentGateways?.bankTransfer?.accountDetails ?? "" },
+      },
+    });
+  };
+
   useEffect(() => {
     fetch("/api/admin/settings")
       .then((r) => r.json())
       .then((res) => {
-        if (res.success && res.data) reset(res.data);
+        if (res.success && res.data) resetWithDefaults(res.data);
       })
       .catch(() => toast.error("Failed to load settings"))
       .finally(() => setLoading(false));
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [reset]);
 
   const onSubmit = async (data: SettingsForm) => {
@@ -92,7 +140,7 @@ export default function SettingsPage() {
       });
       const result = await res.json();
       if (!res.ok) throw new Error();
-      if (result.data) reset(result.data);
+      if (result.data) resetWithDefaults(result.data);
       toast.success("Settings saved");
     } catch {
       toast.error("Failed to save settings");
@@ -262,6 +310,112 @@ export default function SettingsPage() {
               <Label>Maintenance Message</Label>
               <Textarea {...register("maintenance.message")} rows={2} />
             </div>
+          </CardContent>
+        </Card>
+
+        {/* Email Notifications */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Email Notifications</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            <div className="flex items-center gap-3">
+              <Switch
+                checked={watch("emailNotifications.enabled")}
+                onCheckedChange={(checked) =>
+                  setValue("emailNotifications.enabled", !!checked)
+                }
+              />
+              <div>
+                <Label>Enable Email Notifications</Label>
+                <p className="text-sm text-muted-foreground">
+                  Send emails for order events to customers and admin
+                </p>
+              </div>
+            </div>
+
+            {watch("emailNotifications.enabled") && (
+              <div className="space-y-4 pt-2 border-t">
+                <div>
+                  <Label>Admin Email (receives order alerts)</Label>
+                  <Input
+                    type="email"
+                    placeholder="admin@example.com"
+                    {...register("emailNotifications.adminEmail")}
+                  />
+                </div>
+
+                {/* Order Confirmation */}
+                <div className="rounded-lg border p-4 space-y-3">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="font-medium">Order Confirmation</p>
+                      <p className="text-sm text-muted-foreground">Send to customer after order is placed</p>
+                    </div>
+                    <Switch
+                      checked={watch("emailNotifications.orderConfirmation.enabled")}
+                      onCheckedChange={(c) =>
+                        setValue("emailNotifications.orderConfirmation.enabled", !!c)
+                      }
+                    />
+                  </div>
+                  {watch("emailNotifications.orderConfirmation.enabled") && (
+                    <div>
+                      <Label>Subject Line</Label>
+                      <Input {...register("emailNotifications.orderConfirmation.subject")} />
+                    </div>
+                  )}
+                </div>
+
+                {/* Admin Order Alert */}
+                <div className="rounded-lg border p-4 space-y-3">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="font-medium">Admin Order Alert</p>
+                      <p className="text-sm text-muted-foreground">Notify admin when a new order is received</p>
+                    </div>
+                    <Switch
+                      checked={watch("emailNotifications.adminOrderAlert.enabled")}
+                      onCheckedChange={(c) =>
+                        setValue("emailNotifications.adminOrderAlert.enabled", !!c)
+                      }
+                    />
+                  </div>
+                  {watch("emailNotifications.adminOrderAlert.enabled") && (
+                    <div>
+                      <Label>Subject Line</Label>
+                      <Input {...register("emailNotifications.adminOrderAlert.subject")} />
+                    </div>
+                  )}
+                </div>
+
+                {/* Order Status Update */}
+                <div className="rounded-lg border p-4 space-y-3">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="font-medium">Order Status Update</p>
+                      <p className="text-sm text-muted-foreground">Notify customer when order status changes</p>
+                    </div>
+                    <Switch
+                      checked={watch("emailNotifications.orderStatusUpdate.enabled")}
+                      onCheckedChange={(c) =>
+                        setValue("emailNotifications.orderStatusUpdate.enabled", !!c)
+                      }
+                    />
+                  </div>
+                  {watch("emailNotifications.orderStatusUpdate.enabled") && (
+                    <div>
+                      <Label>Subject Line</Label>
+                      <Input {...register("emailNotifications.orderStatusUpdate.subject")} />
+                    </div>
+                  )}
+                </div>
+
+                <p className="text-xs text-muted-foreground">
+                  Use <code>{"{{orderId}}"}</code> and <code>{"{{status}}"}</code> as placeholders in subject lines.
+                </p>
+              </div>
+            )}
           </CardContent>
         </Card>
 

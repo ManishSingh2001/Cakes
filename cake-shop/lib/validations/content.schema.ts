@@ -88,6 +88,28 @@ export const siteSettingsSchema = z.object({
     isEnabled: z.boolean().default(false),
     message: z.string().default("We'll be back soon!"),
   }),
+  emailNotifications: z.object({
+    enabled: z.boolean().default(false),
+    adminEmail: z.string().default(""),
+    orderConfirmation: z.object({
+      enabled: z.boolean().default(true),
+      subject: z.string().default("Your order {{orderId}} has been confirmed!"),
+    }).default({ enabled: true, subject: "Your order {{orderId}} has been confirmed!" }),
+    adminOrderAlert: z.object({
+      enabled: z.boolean().default(true),
+      subject: z.string().default("New order received: {{orderId}}"),
+    }).default({ enabled: true, subject: "New order received: {{orderId}}" }),
+    orderStatusUpdate: z.object({
+      enabled: z.boolean().default(true),
+      subject: z.string().default("Your order {{orderId}} status update"),
+    }).default({ enabled: true, subject: "Your order {{orderId}} status update" }),
+  }).default({
+    enabled: false,
+    adminEmail: "",
+    orderConfirmation: { enabled: true, subject: "Your order {{orderId}} has been confirmed!" },
+    adminOrderAlert: { enabled: true, subject: "New order received: {{orderId}}" },
+    orderStatusUpdate: { enabled: true, subject: "Your order {{orderId}} status update" },
+  }),
   paymentGateways: z.object({
     razorpay: z.object({
       enabled: z.boolean().default(true),
